@@ -1,0 +1,278 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+
+namespace AssetBundleBusinessFramework
+{ 
+
+	public class BundleEditor 
+	{
+		// AB 打包输出路径
+		private readonly static string AB_BUILD_OUTPUT_PATH = Application.streamingAssetsPath;
+		// AB 配置路径
+		private readonly static string ABCONFIG_PATH = "Assets/AssetBundleLoadFramework/Editor/ABConfig.asset";
+		// key ab包名，value 是路径，所有 文件夹 ab 包的 dic 
+		private static Dictionary<string, string> m_AllFileDirDict = new Dictionary<string, string>();
+		// 记录所有 ab 资源路径的列表，用于过滤使用
+		private static List<string> m_AllFileABList = new List<string>();
+
+		// 单个 prefab 的 ab 包数据字典（ prefab名字：依赖的资源路径）
+		private static Dictionary<string, List<string>> m_AllPrefabDirDict = new Dictionary<string, List<string>>();
+
+		[MenuItem("MyAssetBundleTool/打包 AB 包")]
+		public static void Build() {
+
+			// 收集 ABConfig 的所有需要打AB包的资源和依赖资源
+			CollectABConfigAllABAndDependenciesInfo();
+
+			// 给对应所有资源打上 AB 标签
+			SetAllABNameLabel();
+
+			// 正式 AB 打包
+			BuildAssetsToAB();
+
+			// 清空所有资源的 AB 标签
+			CleallAllABNameLabel();
+
+			// 刷新 Project 资源  
+			AssetDatabase.Refresh(); 
+		}
+
+		#region 收集 ABConfig 的所有需要打AB包的资源和依赖资源
+
+		static void CollectABConfigAllABAndDependenciesInfo() {
+			Debug.LogWarning(" CollectABConfigAllABAndDependenciesInfo 收集 ABConfig 的所有需要打AB包的资源和依赖资源");
+			// 执行前清除之前的记录
+			m_AllFileDirDict.Clear();
+			m_AllFileABList.Clear();
+			m_AllPrefabDirDict.Clear();
+
+			// 读取AB配置文件信息
+			ABConfig abConfig = AssetDatabase.LoadAssetAtPath<ABConfig>(ABCONFIG_PATH);
+			foreach (ABConfig.FileDirABName fileDir in abConfig.m_AllFileDirAB)
+			{
+				if (m_AllFileDirDict.ContainsKey(fileDir.ABName))
+				{
+					Debug.LogError($"AB 包配置名字 {fileDir.ABName} 重复，请检查");
+				}
+				else
+				{
+					m_AllFileDirDict.Add(fileDir.ABName, fileDir.Path);
+					m_AllFileABList.Add(fileDir.Path);
+				}
+			}
+
+			// 获取指定prefabs文件夹下所有 prefabs 
+			string[] allStr = AssetDatabase.FindAssets("t:Prefab", abConfig.m_AllPrefabPath.ToArray());
+			for (int i = 0; i < allStr.Length; i++)
+			{
+				string path = AssetDatabase.GUIDToAssetPath(allStr[i]);
+				EditorUtility.DisplayProgressBar("查找 Prefab", "Prefab : " + path, i * 1.0f / allStr.Length);
+				if (IsContainInAllFileABList(path) == false)
+				{
+					GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+					// 所有依赖项
+					string[] allDepend = AssetDatabase.GetDependencies(path);
+					// 所有依赖项路径
+					List<string> allDependPath = new List<string>();
+					for (int j = 0; j < allDepend.Length; j++)
+					{
+						Debug.Log(allDepend[j]);
+						if (IsContainInAllFileABList(allDepend[j]) == false && allDepend[j].EndsWith(".cs")==false)
+						{
+							// 添加到列表中，用于过滤使用
+							m_AllFileABList.Add(allDepend[j]);
+							allDependPath.Add(allDepend[j]);
+						}
+					}
+					if (m_AllPrefabDirDict.ContainsKey(obj.name))
+					{
+						Debug.LogError($"存在相同名字的prefab, 名字为 = {obj.name}");
+					}
+					else
+					{
+						// 把 Prefab 依赖项的路径添加到字典中
+						m_AllPrefabDirDict.Add(obj.name, allDependPath);
+					}
+
+				}
+			}
+			// 关闭进度条
+			EditorUtility.ClearProgressBar();
+		}
+
+        
+
+        /// <summary>
+        /// 是否 AB 资源已经包含
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        static bool IsContainInAllFileABList(string path) {
+            for (int i = 0; i < m_AllFileABList.Count; i++)
+            {
+                if (path == m_AllFileABList[i]||path.Contains(m_AllFileABList[i]))
+                {
+					return true;
+                }
+
+				
+            }
+
+			return false;
+		}
+
+		#endregion
+
+		#region 给对应资源打上 AB 标签
+
+		/// <summary>
+		/// 给对应资源打上 AB 标签
+		/// </summary>
+		static void SetAllABNameLabel() {
+			Debug.LogWarning(" SetAllABNameLabel 给对应资源打上 AB 标签");
+            foreach (string name in m_AllFileDirDict.Keys)
+            {
+				SetABNameLabel(name,m_AllFileDirDict[name]);
+            }
+
+			foreach (string name in m_AllPrefabDirDict.Keys)
+			{
+				SetABNameLabel(name, m_AllPrefabDirDict[name]);
+			}
+		}
+
+
+		/// <summary>
+		/// 给对应资源打上 AB 标签
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="path"></param>
+		static void SetABNameLabel(string name,string path) {
+			AssetImporter assetImporter = AssetImporter.GetAtPath(path);
+			if (assetImporter == null)
+			{
+				Debug.LogError($"不存在此路径文件, path = {path}");
+			}
+			else {
+				Debug.LogWarning($" {path} 打上标签 {name}");
+				assetImporter.assetBundleName = name;
+			}
+		}
+
+		/// <summary>
+		/// 给对应资源打上 AB 标签
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="paths"></param>
+		static void SetABNameLabel(string name, List<string> paths) {
+            for (int i = 0; i < paths.Count; i++)
+            {
+				SetABNameLabel(name,paths[i]);
+
+			}
+		}
+
+		#endregion
+
+		#region 把打上 AB 标签的资源打包成 AssetBundle
+
+		static void BuildAssetsToAB() {
+			// 获取打上 AB 标签的资源
+			string[] allBundles = AssetDatabase.GetAllAssetBundleNames();
+			// key 为全路径， value 包名
+			Dictionary<string, string> resPathDict = new Dictionary<string, string>();
+            for (int i = 0; i < allBundles.Length; i++)
+            {
+				Debug.Log($" 此AB包：{allBundles[i]} ======================== ");
+				string[] allBundlePath = AssetDatabase.GetAssetPathsFromAssetBundle(allBundles[i]);
+                for (int j = 0; j < allBundlePath.Length; j++)
+                {
+                    if (allBundlePath[j].EndsWith(".cs")==true)
+                    {
+						continue;
+                    }
+
+					Debug.Log($" 此AB包：{allBundles[i]} , 包含资源路径为：{allBundlePath[j]}" );
+					resPathDict.Add(allBundlePath[j],allBundles[i]);
+				}
+
+				// 生成自己的配置表
+
+				// 把AB包输出到路径文件夹下
+				BuildPipeline.BuildAssetBundles(AB_BUILD_OUTPUT_PATH, BuildAssetBundleOptions.ChunkBasedCompression,
+					EditorUserBuildSettings.activeBuildTarget);
+			}
+		}
+
+		/// <summary>
+		/// 删除废弃的AB包
+		/// 不全删除，是为了节约打包时间
+		/// </summary>
+		static void DeleteObsoleteAB() {
+			string[] allBundlesName = AssetDatabase.GetAllAssetBundleNames();
+			DirectoryInfo directory = new DirectoryInfo(AB_BUILD_OUTPUT_PATH);
+			FileInfo[] fileInfos = directory.GetFiles("*",SearchOption.AllDirectories);
+            for (int i = 0; i < fileInfos.Length; i++)
+            {
+				if (IsContainABNameForObsolete(fileInfos[i].Name, allBundlesName)
+					|| fileInfos[i].Name.EndsWith(".meta")
+					)
+				{
+					continue;
+				}
+				else {
+					
+                    if (File.Exists(fileInfos[i].FullName))
+                    {
+						File.Delete(fileInfos[i].FullName);
+						Debug.LogError($"删除 {fileInfos[i].Name} 废弃的包");
+					}
+				}
+            }
+		}
+
+		/// <summary>
+		/// 判断之前打包的AB包名是否存在即将打包 AB的资源名称中
+		/// 为了删除废弃的AB包
+		/// </summary>
+		/// <param name="name">之前打好的AB包名</param>
+		/// <param name="strs"></param>
+		/// <returns>true:存在/flase：不存在，需要删除</returns>
+		static bool IsContainABNameForObsolete(string name,string[] strs) {
+            for (int i = 0; i < strs.Length; i++)
+            {
+                if (name.Equals(strs[i]))
+                {
+					return true;
+                }
+            }
+
+			return false;
+		}
+
+        #endregion
+
+        #region 清空所有资源的 AB 标签
+
+        /// <summary>
+        /// 清空所有资源的 AB 标签
+        /// </summary>
+        static void CleallAllABNameLabel() {
+			Debug.LogWarning(" CleallAllABNameLabel 清空所有资源的 AB 标签");
+			string[] oldABNameLabels = AssetDatabase.GetAllAssetBundleNames();
+            for (int i = 0; i < oldABNameLabels.Length; i++)
+            {
+				AssetDatabase.RemoveAssetBundleName(oldABNameLabels[i],true);
+				EditorUtility.DisplayProgressBar("清除 AB 标签", "名字 : " + oldABNameLabels[i], i * 1.0f / oldABNameLabels.Length);
+			}
+
+			// 关闭进度条
+			EditorUtility.ClearProgressBar();
+		}
+
+        #endregion
+    }
+}
