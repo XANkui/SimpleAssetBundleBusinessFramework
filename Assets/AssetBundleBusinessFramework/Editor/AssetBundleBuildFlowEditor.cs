@@ -122,7 +122,9 @@ namespace AssetBundleBusinessFramework
         static bool IsContainInAllFileABList(string path) {
             for (int i = 0; i < m_AllFileABList.Count; i++)
             {
-                if (path == m_AllFileABList[i]||path.Contains(m_AllFileABList[i]))
+                if (path == m_AllFileABList[i]
+					// (path.Contains(m_AllFileABList[i]) && (path.Replace(m_AllFileABList[i],"")[0]=='/')) 为了排除类似路径冗余的错误剔除（类似（假包含关系）/GameData/Test 与 /GameData/TestDDD/xx）
+					|| (path.Contains(m_AllFileABList[i]) && (path.Replace(m_AllFileABList[i],"")[0]=='/')))
                 {
 					return true;
                 }
