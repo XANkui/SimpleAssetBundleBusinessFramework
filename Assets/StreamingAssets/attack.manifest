@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 3417626209
+CRC: 1542407143
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 498c2e1ac5b0be5b5ed356b4c7b1caeb
+    Hash: 3c5ac7787505f08033860e4a5b1105a4
   TypeTreeHash:
     serializedVersion: 2
     Hash: 007001a3a69d13c0488397b14e5c8ec5
@@ -41,7 +41,6 @@ Assets:
 - Assets/GameData/Modle/benghuai/Materials/Avatar_Kiana_C2_Texture_Body_Color_RGB2048.mat
 - Assets/GameData/Modle/benghuai/Materials/Avatar_Kiana_C2_Texture_Hair_Color_Common.mat
 - Assets/GameData/Modle/benghuai/Weapon_Pistol_K9_62_2.png
-- Assets/GameData/Modle/benghuai/benghuai.shader
 - Assets/GameData/Modle/benghuai/ID_368.bmp
 - Assets/GameData/Modle/benghuai/Materials/No Name.mat
 - Assets/GameData/Modle/benghuai/ID_370.bmp
@@ -49,4 +48,5 @@ Assets:
 - Assets/GameData/Modle/benghuai/Avatar_Kiana_C2_Texture_Body_Color_RGB2048.png
 - Assets/GameData/Modle/benghuai/ID_362.bmp
 - Assets/GameData/Prefabs/Attack.prefab
-Dependencies: []
+Dependencies:
+- D:/MySoftware/Projects/UnityProjects/AssetBundleLoadFramework/Assets/StreamingAssets/shader

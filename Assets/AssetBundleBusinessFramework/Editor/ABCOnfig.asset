@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c07e348b66b867d418085a890689c5bf, type: 3}
-  m_Name: ABCOnfig
+  m_Name: ABConfig
   m_EditorClassIdentifier: 
   m_AllPrefabPath:
   - Assets/GameData/Prefabs

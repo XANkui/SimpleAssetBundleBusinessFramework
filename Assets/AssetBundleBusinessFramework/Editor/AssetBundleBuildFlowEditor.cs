@@ -1,18 +1,21 @@
-﻿using System.Collections;
+﻿using AssetBundleBusinessFramework.Tools;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine;
 
 namespace AssetBundleBusinessFramework
 { 
 
-	public class BundleEditor 
+	public class AssetBundleBuildFlowEditor 
 	{
 		// AB 打包输出路径
 		private readonly static string AB_BUILD_OUTPUT_PATH = Application.streamingAssetsPath;
 		// AB 配置路径
-		private readonly static string ABCONFIG_PATH = "Assets/AssetBundleLoadFramework/Editor/ABConfig.asset";
+		private readonly static string ABCONFIG_PATH = "Assets/AssetBundleBusinessFramework/Editor/ABConfig.asset";
 		// key ab包名，value 是路径，所有 文件夹 ab 包的 dic 
 		private static Dictionary<string, string> m_AllFileDirDict = new Dictionary<string, string>();
 		// 记录所有 ab 资源路径的列表，用于过滤使用
@@ -20,6 +23,9 @@ namespace AssetBundleBusinessFramework
 
 		// 单个 prefab 的 ab 包数据字典（ prefab名字：依赖的资源路径）
 		private static Dictionary<string, List<string>> m_AllPrefabDirDict = new Dictionary<string, List<string>>();
+
+		// 记录所有 ab 资源路径的列表，用于 prefab xml config 过滤使用
+		private static List<string> m_XmlConfigFilterList = new List<string>();
 
 		[MenuItem("MyAssetBundleTool/打包 AB 包")]
 		public static void Build() {
@@ -48,6 +54,7 @@ namespace AssetBundleBusinessFramework
 			m_AllFileDirDict.Clear();
 			m_AllFileABList.Clear();
 			m_AllPrefabDirDict.Clear();
+			m_XmlConfigFilterList.Clear();
 
 			// 读取AB配置文件信息
 			ABConfig abConfig = AssetDatabase.LoadAssetAtPath<ABConfig>(ABCONFIG_PATH);
@@ -61,6 +68,7 @@ namespace AssetBundleBusinessFramework
 				{
 					m_AllFileDirDict.Add(fileDir.ABName, fileDir.Path);
 					m_AllFileABList.Add(fileDir.Path);
+					m_XmlConfigFilterList.Add(fileDir.Path);
 				}
 			}
 
@@ -70,6 +78,7 @@ namespace AssetBundleBusinessFramework
 			{
 				string path = AssetDatabase.GUIDToAssetPath(allStr[i]);
 				EditorUtility.DisplayProgressBar("查找 Prefab", "Prefab : " + path, i * 1.0f / allStr.Length);
+				m_XmlConfigFilterList.Add(path);
 				if (IsContainInAllFileABList(path) == false)
 				{
 					GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -179,6 +188,9 @@ namespace AssetBundleBusinessFramework
 
 		#region 把打上 AB 标签的资源打包成 AssetBundle
 
+		/// <summary>
+		/// 把打上 AB 标签的资源打包成 AssetBundle
+		/// </summary>
 		static void BuildAssetsToAB() {
 			// 获取打上 AB 标签的资源
 			string[] allBundles = AssetDatabase.GetAllAssetBundleNames();
@@ -196,15 +208,94 @@ namespace AssetBundleBusinessFramework
                     }
 
 					Debug.Log($" 此AB包：{allBundles[i]} , 包含资源路径为：{allBundlePath[j]}" );
-					resPathDict.Add(allBundlePath[j],allBundles[i]);
+                    if (IsValidPathForPrefab(allBundlePath[j]))
+                    {
+						resPathDict.Add(allBundlePath[j], allBundles[i]);
+
+					}
 				}
 
+				// 删除冗余废弃的AB包
+				DeleteObsoleteAB();
+
 				// 生成自己的配置表
+				WriteData(resPathDict);
 
 				// 把AB包输出到路径文件夹下
 				BuildPipeline.BuildAssetBundles(AB_BUILD_OUTPUT_PATH, BuildAssetBundleOptions.ChunkBasedCompression,
 					EditorUserBuildSettings.activeBuildTarget);
 			}
+		}
+
+		/// <summary>
+		/// 把相关的AB 包资源，生成 XML 、二进制配置表
+		/// XML 便于查看 AB 包资源及其依赖关系、二进制配置表 用于加载
+		/// </summary>
+		/// <param name="resPathDict"></param>
+		static void WriteData(Dictionary<string,string> resPathDict) {
+			AssetBundleXMLConfig xmlConfig = new AssetBundleXMLConfig();
+			xmlConfig.ABList = new List<ABBase>();
+            foreach (string path in resPathDict.Keys)
+            {
+				ABBase abBase = new ABBase();
+				abBase.Path = path;
+				abBase.Crc = Crc32.GetCrc32(path);
+				abBase.ABName = resPathDict[path];
+				abBase.AssetName = path.Remove(0,path.LastIndexOf("/")+1);
+				abBase.ABDependce = new List<string>();
+				string[] resDependce = AssetDatabase.GetDependencies(path);
+                for (int i = 0; i < resDependce.Length; i++)
+                {
+					string tempPath = resDependce[i];
+					// 依赖，排除自身和脚本文件
+                    if (tempPath == path || path.EndsWith(".cs"))
+                    {
+						continue;
+                    }
+
+					string abName = "";
+                    if (resPathDict.TryGetValue(tempPath,out abName))
+                    {
+						// 判断资源中是否已经包含
+                        if (abName == resPathDict[path])
+                        {
+							continue;
+                        }
+
+						// 判断依赖是否已经包含添加过
+                        if (abBase.ABDependce.Contains(abName)==false)
+                        {
+							Debug.Log($" WriteData ：{path} , ABDependce 依赖：{abName}");
+							abBase.ABDependce.Add(abName);
+                        }
+                    }
+                }
+
+				// 添加到配置中
+				xmlConfig.ABList.Add(abBase);
+			}
+
+			// 写入 xml文件
+			string xmlPath = Application.dataPath + "/AssetBundleConfig.xml";
+			if (File.Exists(xmlPath)) File.Delete(xmlPath);
+			FileStream fileStream = new FileStream(xmlPath,FileMode.Create,FileAccess.ReadWrite,FileShare.ReadWrite);
+			StreamWriter sw = new StreamWriter(fileStream,System.Text.Encoding.UTF8);
+			XmlSerializer xs = new XmlSerializer(xmlConfig.GetType());
+			xs.Serialize(sw,xmlConfig);
+			sw.Close();
+			fileStream.Close();
+
+            // 写入 二进制文件
+            //优化文件大小： path 清掉，不必要保存到二进制文件中（因为读取加载的时候不需要，只是为了xml 文件中便于观察而已）
+            foreach (ABBase abBase in xmlConfig.ABList)
+            {
+				abBase.Path = "";
+            }
+			string bytePath = AB_BUILD_OUTPUT_PATH + "/AssetBundleConfig.bytes";
+			FileStream fs = new FileStream(bytePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+			BinaryFormatter bf = new BinaryFormatter();
+			bf.Serialize(fs,xmlConfig);
+			fs.Close();
 		}
 
 		/// <summary>
@@ -228,7 +319,7 @@ namespace AssetBundleBusinessFramework
                     if (File.Exists(fileInfos[i].FullName))
                     {
 						File.Delete(fileInfos[i].FullName);
-						Debug.LogError($"删除 {fileInfos[i].Name} 废弃的包");
+						Debug.Log($"删除 {fileInfos[i].Name} 废弃的包");
 					}
 				}
             }
@@ -244,7 +335,25 @@ namespace AssetBundleBusinessFramework
 		static bool IsContainABNameForObsolete(string name,string[] strs) {
             for (int i = 0; i < strs.Length; i++)
             {
-                if (name.Equals(strs[i]))
+                if (name==(strs[i]))
+                {
+					return true;
+                }
+            }
+
+			return false;
+		}
+
+		/// <summary>
+		/// 判断 添加到 XML config 是否有效
+		/// 过滤掉属于 prefab 自身的依赖生成到 xml 中
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		static bool IsValidPathForPrefab(string path) {
+            for (int i = 0; i < m_XmlConfigFilterList.Count; i++)
+            {
+                if (path.Contains(m_XmlConfigFilterList[i]))
                 {
 					return true;
                 }

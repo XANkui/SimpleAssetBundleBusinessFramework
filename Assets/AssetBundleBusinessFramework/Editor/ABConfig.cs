@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AssetBundleBusinessFramework
 { 
-	[CreateAssetMenu(fileName ="ABCOnfig",menuName ="MyAssetBundleTool/CreateABConfig",order =0)]
+	[CreateAssetMenu(fileName ="ABConfig",menuName ="MyAssetBundleTool/CreateABConfig",order =0)]
 	public class ABConfig : ScriptableObject
 	{
 		/// <summary>
