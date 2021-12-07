@@ -293,7 +293,7 @@ namespace AssetBundleBusinessFramework
             {
 				abBase.Path = "";
             }
-			string bytePath = AB_BUILD_OUTPUT_PATH + "/AssetBundleConfig.bytes";
+			string bytePath ="Assets/GameData/Data/ADData/AssetBundleConfig.bytes";
 			FileStream fs = new FileStream(bytePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
 			BinaryFormatter bf = new BinaryFormatter();
 			bf.Serialize(fs,xmlConfig);
