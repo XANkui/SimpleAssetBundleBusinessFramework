@@ -31,5 +31,7 @@ namespace AssetBundleBusinessFramework.Example.Test {
                 clip = null;
             }
         }
+
+        
     }
 }
