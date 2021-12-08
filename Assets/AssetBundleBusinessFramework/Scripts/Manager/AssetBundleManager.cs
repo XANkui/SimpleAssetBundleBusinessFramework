@@ -21,6 +21,27 @@ namespace AssetBundleBusinessFramework {
 		public List<string> ABDependce = null;
 		// 该资源的AB 包
 		public AssetBundle AssetBundle = null;
+
+		//-------------------------------------------------
+
+		// 资源对象
+		public Object Obj = null;
+		// 资源的唯一标识
+		public int GUID = 0;
+		// 资源最后使用时间
+		public float LastUserTime = 0.0f;
+		// 引用计数
+		protected int m_RefCount = 0;
+		public int RefCount {
+			get { return m_RefCount; }
+			set {
+				m_RefCount = value;
+                if (m_RefCount<0)
+                {
+					Debug.LogError(" RefCount < 0," + (Obj!=null ? Obj.name:"name is null"));
+                }
+			}
+		}
 	}
 
 	/// <summary>
@@ -39,7 +60,7 @@ namespace AssetBundleBusinessFramework {
 	public class AssetBundleManager : Singleton<AssetBundleManager>
 	{
 		// key: crc,value : 资源 Item
-		private Dictionary<uint, ResourceItem> m_ResourceItemsDIct = new Dictionary<uint, ResourceItem>();
+		private Dictionary<uint, ResourceItem> m_ResourceItemsDict = new Dictionary<uint, ResourceItem>();
 		// key: crc,value : AB 资源的引用计数Item 
 		private Dictionary<uint, AssetBundleItem> m_AssetBundleItemRefDict = new Dictionary<uint, AssetBundleItem>();
 		// AssetBundleItem 类对象池
@@ -73,12 +94,12 @@ namespace AssetBundleBusinessFramework {
 				item.AssetName = abBase.AssetName;
 				item.ABName = abBase.ABName;
 				item.ABDependce = abBase.ABDependce;
-				if (m_ResourceItemsDIct.ContainsKey(item.Crc) == true)
+				if (m_ResourceItemsDict.ContainsKey(item.Crc) == true)
 				{
 					Debug.LogError($"重复的 Crc 资源名 {item.AssetName} AB 包名为 {item.ABName}");
 				}
 				else {
-					m_ResourceItemsDIct.Add(item.Crc,item);
+					m_ResourceItemsDict.Add(item.Crc,item);
 				}
             }
 
@@ -88,7 +109,7 @@ namespace AssetBundleBusinessFramework {
 		public ResourceItem LoadResourceAssetBundle(uint crc) {
 			ResourceItem item = null;
 
-			if (m_ResourceItemsDIct.TryGetValue(crc,out item)
+			if (m_ResourceItemsDict.TryGetValue(crc,out item)==false
 				|| item ==null)
             {
 				Debug.LogError($"LoadResourceAssetBundle error : can not find crc {crc} in AssetBundleCOnfig");
@@ -193,7 +214,7 @@ namespace AssetBundleBusinessFramework {
 		/// <param name="crc"></param>
 		/// <returns></returns>
 		public ResourceItem FindResourceItem(uint crc) {
-			return m_ResourceItemsDIct[crc];
+			return m_ResourceItemsDict[crc];
 		}
 	}
 }

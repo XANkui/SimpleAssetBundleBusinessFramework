@@ -1,5 +1,6 @@
 ﻿using AssetBundleBusinessFramework.Tools;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace AssetBundleBusinessFramework {
 
@@ -9,7 +10,205 @@ namespace AssetBundleBusinessFramework {
 	/// </summary>
 	public class ResourceManager : Singleton<ResourceManager>
 	{
-		
+		// 是否从 AB 中加载
+		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = true;
+
+		// 缓存使用的资源列表
+		public Dictionary<uint, ResourceItem> AssetDict { get; set; } = new Dictionary<uint, ResourceItem>();
+		// 缓存应用计数为零的资源列表，达到缓存最大的时候，释放列表里面最早的没有应用的资源
+		protected CMapList<ResourceItem> m_NoRefrenceAssetMapList = new CMapList<ResourceItem>();
+
+		/// <summary>
+		/// 同步资源加载，外部直接调用
+		/// 仅加载不需要实例化的资源，例如 Texture,Sound 等等
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public T LoadResource<T>(string path) where T : UnityEngine.Object {
+			if (string.IsNullOrEmpty(path))
+			{
+				return null;
+			}
+
+			uint crc = Crc32.GetCrc32(path);
+
+			ResourceItem item = GetCacheResourceItem(crc);
+			if (item != null)
+			{
+				return item.Obj as T;
+			}
+
+			T obj = null;
+#if UNITY_EDITOR
+			if (IS_LOAD_ASSET_FROM_ASSETBUNDLE == false)
+			{
+				
+				item = AssetBundleManager.Instance.FindResourceItem(crc);
+				if (item.Obj != null)
+				{
+					obj = (T)item.Obj;
+				}
+				else {
+					obj = LoadAssetByEditor<T>(path);
+				}
+			}
+#endif
+
+            if (obj==null)
+            {
+				item = AssetBundleManager.Instance.LoadResourceAssetBundle(crc);
+                if (item!=null && item.AssetBundle!=null)
+                {
+
+					if (item.Obj != null)
+					{
+						obj = (T)item.Obj;
+					}
+					else { 
+						obj = item.AssetBundle.LoadAsset<T>(item.AssetName);
+					}
+				}
+            }
+
+			CacheResource(path,ref item,crc,obj);
+
+			return obj;
+		}
+
+		/// <summary>
+		/// 释放不需要实例化的资源
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="isDestroyObj"></param>
+		/// <returns></returns>
+		public bool ReleaseResource(Object obj, bool isDestroyObj=false) {
+			if (obj == null)
+            {
+				return false;
+            }
+
+			ResourceItem item = null;
+            foreach (ResourceItem res in AssetDict.Values)
+            {
+                if (res.GUID == obj.GetInstanceID())
+                {
+					item = res;
+					break;
+                }
+            }
+
+            if (item == null)
+            {
+				Debug.LogError($"AssetDict has no Obj ：{obj.name}, Could have been released multiple times");
+				return false;
+			}
+
+			item.RefCount--;
+			DestoryResourceItem(item,isDestroyObj);
+			return true;
+		}
+
+		/// <summary>
+		/// 缓存资源
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="item"></param>
+		/// <param name="crc"></param>
+		/// <param name="obj"></param>
+		/// <param name="addRefCount"></param>
+		void CacheResource(string path,ref ResourceItem item,uint crc,Object obj, int addRefCount=1) {
+
+			// 缓存太傅哦，清除最早没有使用的资源
+			WashOutCacheResource();
+			
+			if (item==null)
+            {
+				Debug.LogError($"ResoureItem is null,path : {path}");
+            }
+
+            if (obj==null)
+            {
+				Debug.LogError($"Resource Load fail, path : {path}");
+            }
+
+			item.Obj = obj;
+			item.GUID = obj.GetInstanceID();
+			item.LastUserTime = Time.realtimeSinceStartup;
+			item.RefCount += addRefCount;
+			ResourceItem oldItem = null;
+			if (AssetDict.TryGetValue(item.Crc, out oldItem) == true)
+			{
+				AssetDict[item.Crc] = item;
+			}
+			else {
+				AssetDict.Add(item.Crc,item);
+			}
+		}
+
+		/// <summary>
+		/// 清理过多的缓存资源
+		/// </summary>
+		void WashOutCacheResource() { }
+
+		/// <summary>
+		/// 回收资源
+		/// </summary>
+		/// <param name="item"></param>
+		/// <param name="isDestoryCache"></param>
+		protected void DestoryResourceItem(ResourceItem item,bool isDestoryCache =false) {
+            if (item==null || item.RefCount>0)
+            {
+				return;
+            }
+
+			if (AssetDict.Remove(item.Crc) == false) // 移除失败
+			{
+				return;
+			}
+
+			if (isDestoryCache==false)
+            {
+				m_NoRefrenceAssetMapList.InsertToHead(item);
+				return;
+            }
+
+			// 释放 AssetBundle引用
+			AssetBundleManager.Instance.ReleaseAsset(item);
+
+            if (item.Obj!=null)
+            {
+				item.Obj = null;
+
+			}
+		}
+
+#if UNITY_EDITOR
+
+		protected T LoadAssetByEditor<T>(string path)where T : UnityEngine.Object{
+			return UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
+		}
+#endif
+
+		ResourceItem GetCacheResourceItem(uint crc, int addRefCount =1) {
+			ResourceItem item = null;
+            if (AssetDict.TryGetValue(crc,out item))
+            {
+                if (item!=null)
+                {
+					item.RefCount += addRefCount;
+					item.LastUserTime = Time.realtimeSinceStartup;
+                    
+					//if (item.RefCount<-1)
+     //               {
+					//	m_NoRefrenceAssetMapList.Remove(item);
+     //               }
+					
+                }
+            }
+
+			return item;
+		}
 	}
 
 	public class DoubleLinkedListNode<T> where T : class, new() {
