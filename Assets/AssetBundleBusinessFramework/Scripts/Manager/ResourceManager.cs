@@ -15,6 +15,28 @@ namespace AssetBundleBusinessFramework {
 
 	}
 
+	/// <summary>
+	/// 注意和 ResourceItem区分开来
+	/// 
+	/// </summary>
+	public class ResourceObj {
+		public uint Crc = 0;    // 路径对应的 Crc
+		public ResourceItem ResItem=null;	// 用于实例化的预制体载体（可从此获取预制体，来实例化）
+		public GameObject CloneObj = null;	// 实例化出来的 GameObject
+		public bool IsClear = true; //是否清除资源
+		public long GUID = 0;   // Object 的标识，便于查找该对象
+		public bool Already = false;	// 是否已经被释放过
+		public void Reset() {
+			Crc = 0;
+			ResItem = null;
+			CloneObj = null;
+			IsClear = true;
+			GUID = 0;
+			Already = false;
+		}
+	}
+
+
 	public class AsyncLoadResParam {
 		public List<AsyncCallback> CallbackList = new List<AsyncCallback>();
 		public uint Crc;
@@ -179,6 +201,63 @@ namespace AssetBundleBusinessFramework {
 		}
 
 		/// <summary>
+		/// 同步加载资源，针对ObjectManager的接口
+		/// 需要实例化的资源
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="resObj"></param>
+		/// <returns></returns>
+		public ResourceObj LoadResource(string path,ResourceObj resObj) {
+            if (resObj == null)
+            {
+				return null;
+            }
+
+			uint crc = resObj.Crc == 0 ? Crc32.GetCrc32(path) : resObj.Crc;
+			ResourceItem item = GetCacheResourceItem(crc);
+            if (item!=null)
+            {
+				resObj.ResItem = item;
+				return resObj;
+            }
+			Object obj = null;
+#if UNITY_EDITOR
+            if (IS_LOAD_ASSET_FROM_ASSETBUNDLE==false)
+            {
+				item = AssetBundleManager.Instance.FindResourceItem(crc);
+				if (item.Obj != null)
+				{
+					obj = item.Obj as Object;
+				}
+				else {
+					obj = LoadAssetByEditor<Object>(path);
+				}
+			}
+#endif
+			if (obj == null)
+			{
+				item = AssetBundleManager.Instance.LoadResourceAssetBundle(crc);
+				if (item != null && item.AssetBundle != null)
+				{
+
+					if (item.Obj != null)
+					{
+						obj = item.Obj as Object;
+					}
+					else
+					{
+						obj = item.AssetBundle.LoadAsset<Object>(item.AssetName);
+					}
+				}
+			}
+
+			CacheResource(path, ref item, crc, obj);
+			resObj.ResItem = item;
+			item.IsClear = resObj.IsClear;
+			return resObj;
+		}
+
+		/// <summary>
 		/// 同步资源加载，外部直接调用
 		/// 仅加载不需要实例化的资源，例如 Texture,Sound 等等
 		/// </summary>
@@ -234,6 +313,30 @@ namespace AssetBundleBusinessFramework {
 			CacheResource(path,ref item,crc,obj);
 
 			return obj;
+		}
+
+		/// <summary>
+		/// 卸载实例化过的资源（ResourceObj）
+		/// </summary>
+		/// <param name="resObj"></param>
+		/// <param name="destroyObj"></param>
+		/// <returns></returns>
+		public bool ReleaseResource(ResourceObj resObj,bool destroyObj =false) {
+            if (resObj==null)
+            {
+				return false;
+            }
+
+			ResourceItem item = null;
+			if (AssetDict.TryGetValue(resObj.Crc,out item)==false || item==null )
+            {
+				Debug.LogError($"AssetDict 不存在该资源：{resObj.CloneObj.name},或者释放了多次");
+            }
+
+			GameObject.Destroy(resObj.CloneObj);
+			item.RefCount--;
+			DestoryResourceItem(item,destroyObj);
+			return true;
 		}
 
 		/// <summary>
@@ -294,6 +397,67 @@ namespace AssetBundleBusinessFramework {
 			item.RefCount--;
 			DestoryResourceItem(item, isDestroyObj);
 			return true;
+		}
+
+		/// <summary>
+		/// 根据 ResourceObj 增加引用计数 
+		/// </summary>
+		/// <param name="resObj"></param>
+		/// <param name="count"></param>
+		/// <returns></returns>
+		public int IncreaseResourceRef(ResourceObj resObj,int count =1) {
+			return resObj != null ? IncreaseResourceRef(resObj.Crc, count):0;
+		}
+
+		/// <summary>
+		/// 根据 crc(path) 增加引用计数 
+		/// </summary>
+		/// <param name="crc"></param>
+		/// <param name="count"></param>
+		/// <returns></returns>
+		public int IncreaseResourceRef(uint crc, int count = 1)
+		{
+			ResourceItem item = null;
+            if (AssetDict.TryGetValue(crc,out item)==false || item==null)
+            {
+				return 0;
+            }
+
+			item.RefCount += count;
+			item.LastUserTime = Time.realtimeSinceStartup;
+
+			return item.RefCount;
+		}
+
+
+		/// <summary>
+		/// 根据 ResourceObj 减少引用计数 
+		/// </summary>
+		/// <param name="resObj"></param>
+		/// <param name="count"></param>
+		/// <returns></returns>
+		public int DecreaseResourceRef(ResourceObj resObj, int count = 1)
+		{
+			return resObj != null ? DecreaseResourceRef(resObj.Crc, count) : 0;
+		}
+
+		/// <summary>
+		/// 根据 crc(path) 减少引用计数 
+		/// </summary>
+		/// <param name="crc"></param>
+		/// <param name="count"></param>
+		/// <returns></returns>
+		public int DecreaseResourceRef(uint crc, int count = 1)
+		{
+			ResourceItem item = null;
+			if (AssetDict.TryGetValue(crc, out item) == false || item == null)
+			{
+				return 0;
+			}
+
+			item.RefCount -= count;
+
+			return item.RefCount;
 		}
 
 		/// <summary>
@@ -379,6 +543,12 @@ namespace AssetBundleBusinessFramework {
 		}
 #endif
 
+		/// <summary>
+		/// 从资源池获取缓存资源
+		/// </summary>
+		/// <param name="crc"></param>
+		/// <param name="addRefCount"></param>
+		/// <returns></returns>
 		ResourceItem GetCacheResourceItem(uint crc, int addRefCount =1) {
 			ResourceItem item = null;
             if (AssetDict.TryGetValue(crc,out item))

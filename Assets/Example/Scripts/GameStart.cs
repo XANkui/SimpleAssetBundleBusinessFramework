@@ -8,7 +8,10 @@ namespace AssetBundleBusinessFramework.Example {
 	{
         private void Awake()
         {
+            DontDestroyOnLoad(gameObject);
 			AssetBundleManager.Instance.LoadAssetBundleConfig();
+            ResourceManager.Instance.Init(this);
+            ObjectManager.Instance.Init(transform.Find("RecyclePoolTrans"), transform.Find("SceneTrans"));
         }
 
         // Start is called before the first frame update
