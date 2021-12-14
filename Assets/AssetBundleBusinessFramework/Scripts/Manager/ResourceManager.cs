@@ -111,6 +111,8 @@ namespace AssetBundleBusinessFramework {
 	/// </summary>
 	public class ResourceManager : Singleton<ResourceManager>
 	{
+		// guid
+		protected long m_Guid = 0;
 		// 是否从 AB 中加载
 		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = false;
 		// 最长连续卡着加载资源的时间，单位微秒
@@ -148,6 +150,14 @@ namespace AssetBundleBusinessFramework {
 		}
 
 		/// <summary>
+		/// 创建唯一 guid
+		/// </summary>
+		/// <returns></returns>
+		public long CreateGuid() {
+			return m_Guid++;
+		}
+
+		/// <summary>
 		/// 清空缓存
 		/// 跳转场景的时候可能需要
 		/// </summary>
@@ -167,6 +177,39 @@ namespace AssetBundleBusinessFramework {
             }
 			tempList.Clear();
 
+		}
+
+		/// <summary>
+		/// 取消正在进行的异步加载
+		/// </summary>
+		/// <param name="resObj"></param>
+		/// <returns></returns>
+		public bool CancelAsyncLoad(ResourceObj resObj) {
+			AsyncLoadResParam para = null;
+            if (m_LoadingAssetDict.TryGetValue(resObj.Crc,out para)==true && m_LoadingAssetList[(int)para.Priority].Contains(para))
+            {
+                for (int i = para.CallbackList.Count; i >=0; i--)
+                {
+					AsyncCallback tempCallback = para.CallbackList[i];
+                    if (tempCallback !=null && resObj == tempCallback.ResObj)
+                    {
+						tempCallback.Reset();
+						m_AsyncCallbackPool.Recycle(tempCallback);
+						para.CallbackList.Remove(tempCallback);
+                    }
+                }
+
+                if (para.CallbackList.Count <=0)
+                {
+					para.Reset();
+					m_LoadingAssetList[(int)para.Priority].Remove(para);
+					m_AsyncLoadResParamPool.Recycle(para);
+					m_LoadingAssetDict.Remove(resObj.Crc);
+					return true;
+				}
+            }
+
+			return false;
 		}
 
 		/// <summary>
@@ -553,6 +596,9 @@ namespace AssetBundleBusinessFramework {
 
 			// 释放 AssetBundle引用
 			AssetBundleManager.Instance.ReleaseAsset(item);
+
+			// 清空资源对应的对象池
+			ObjectManager.Instance.ClearPoolObject(item.Crc);
 
             if (item.Obj!=null)
             {

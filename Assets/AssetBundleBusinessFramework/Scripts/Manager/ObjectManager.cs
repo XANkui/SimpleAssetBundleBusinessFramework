@@ -22,10 +22,89 @@ namespace AssetBundleBusinessFramework {
         protected Dictionary<int, ResourceObj> m_ResourceObjDict = new Dictionary<int, ResourceObj>();
         // ResourceObj 的类对象池
         protected ClassObjectPool<ResourceObj> m_ResourceObjClassPool = null;
+        // 根据异步加载的 Guid 储存 ResourceObj，用来判断是否正在异步加载
+        protected Dictionary<long, ResourceObj> m_AsyncGuidResObjDict = new Dictionary<long, ResourceObj>();
+        
+        /// <summary>
+        /// 初始化
+        /// </summary>
+        /// <param name="recyclePoolTrans"></param>
+        /// <param name="sceneTrans"></param>
         public void Init(Transform recyclePoolTrans, Transform sceneTrans) {
             m_ResourceObjClassPool = GetOrCreateClassPool<ResourceObj>(1000);
             m_RecyclePoolTrans = recyclePoolTrans;
             m_SceneTrans = sceneTrans;
+        }
+
+        /// <summary>
+        /// 清空对象池
+        /// </summary>
+        public void CleatCache() {
+            List<uint> tempList = new List<uint>();
+            foreach (uint key in m_ObjectPoolDict.Keys)
+            {
+                List<ResourceObj> st = m_ObjectPoolDict[key];
+                for (int i = st.Count; i >= 0; i--)
+                {
+                    ResourceObj resObj = st[i];
+                    if (System.Object.ReferenceEquals(resObj.CloneObj,null)==false
+                        &&resObj.IsClear==true)
+                    {
+                        GameObject.Destroy(resObj.CloneObj);
+                        m_ResourceObjDict.Remove(resObj.CloneObj.GetInstanceID());
+                        resObj.Reset();
+                        m_ResourceObjClassPool.Recycle(resObj);
+                    }
+                }
+
+                if (st.Count<=0)
+                {
+                    tempList.Add(key);
+                }
+            }
+
+            for (int i = 0; i < tempList.Count; i++)
+            {
+                uint temp = tempList[i];
+                if (m_ObjectPoolDict.ContainsKey(temp)==true)
+                {
+                    m_ObjectPoolDict.Remove(temp);
+                }
+            }
+
+            tempList.Clear();
+        }
+
+        /// <summary>
+        /// 清除某个资源在对象池中所有的对象
+        /// </summary>
+        /// <param name="crc"></param>
+        public void ClearPoolObject(uint crc) {
+            List<ResourceObj> st = null;
+            if (m_ObjectPoolDict.TryGetValue(crc,out st)==false 
+                || st ==null)
+            {
+                return;
+            }
+
+            for (int i = st.Count-1; i >=0; i--)
+            {
+                ResourceObj resObj = st[i];
+                if (resObj.IsClear==true)
+                {
+                    st.Remove(resObj);
+                    int tempID = resObj.CloneObj.GetInstanceID();
+                    GameObject.Destroy(resObj.CloneObj);
+                    resObj.Reset();
+                    m_ResourceObjDict.Remove(tempID);
+                    m_ResourceObjClassPool.Recycle(resObj);
+                }
+            }
+
+            if (st.Count <=0)
+            {
+                m_ObjectPoolDict.Remove(crc);
+            }
         }
 
         /// <summary>
@@ -58,6 +137,41 @@ namespace AssetBundleBusinessFramework {
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 取消正在加载的异步加载
+        /// </summary>
+        /// <param name="guid"></param>
+        public void CancelAsyncLoad(long guid) {
+            ResourceObj resObj = null;
+            if (m_AsyncGuidResObjDict.TryGetValue(guid,out resObj)==true 
+                && ResourceManager.Instance.CancelAsyncLoad(resObj)==true)
+            {
+                m_AsyncGuidResObjDict.Remove(guid);
+                resObj.Reset();
+                m_ResourceObjClassPool.Recycle(resObj);
+            }
+        }
+
+        /// <summary>
+        /// 是否正在异步加载中
+        /// </summary>
+        /// <param name="guid"></param>
+        /// <returns></returns>
+        public bool IsAsyncLoading(long guid) {
+
+            return m_AsyncGuidResObjDict[guid] != null;
+        }
+
+        /// <summary>
+        /// 判断实例化对象是丢是对象池创建的
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public bool IsObjectManagerCreate(GameObject obj) {
+            ResourceObj resObj = m_ResourceObjDict[obj.GetInstanceID()];
+            return resObj != null;
         }
 
         /// <summary>
@@ -132,11 +246,12 @@ namespace AssetBundleBusinessFramework {
         /// <param name="param2"></param>
         /// <param name="param3"></param>
         /// <param name="clear"></param>
-        public void InstantiateObjectAsync(string path,OnAsyncObjFinish dealFinish,LoadResPriority priority, bool setSceneObject=false,
+        /// <returns>Guid</returns>
+        public long InstantiateObjectAsync(string path,OnAsyncObjFinish dealFinish,LoadResPriority priority, bool setSceneObject=false,
             object param1=null,object param2 = null, object param3 = null,bool clear =true) {
             if (string.IsNullOrEmpty(path))
             {
-                return;
+                return 0;
             }
 
             uint crc = Crc32.GetCrc32(path);
@@ -154,8 +269,10 @@ namespace AssetBundleBusinessFramework {
                     dealFinish(path,resObj.CloneObj,param1,param2,param3);
                 }
 
-                return;
+                return resObj.GUID;
             }
+
+            long guid = ResourceManager.Instance.CreateGuid();
 
             resObj = m_ResourceObjClassPool.Spawn(true);
             resObj.Crc = crc;
@@ -167,6 +284,8 @@ namespace AssetBundleBusinessFramework {
             resObj.Param3 = param3;
             // 调用 ResourceManager 的异步加载接口
             ResourceManager.Instance.AsyncLoadResource(path,resObj, OnLoadResourceObjFinish, priority);
+
+            return guid;
         }
 
         /// <summary>
@@ -191,6 +310,12 @@ namespace AssetBundleBusinessFramework {
             }
             else {
                 resObj.CloneObj = GameObject.Instantiate(resObj.ResItem.Obj) as GameObject;
+            }
+
+            // 异步加载完成，从字典中移除
+            if (m_AsyncGuidResObjDict.ContainsKey(resObj.GUID)==true)
+            {
+                m_AsyncGuidResObjDict.Remove(resObj.GUID);
             }
 
             if (resObj.CloneObj !=null && resObj.SetSceneParent)
