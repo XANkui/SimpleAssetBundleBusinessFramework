@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AssetBundleBusinessFramework.Example.Test
 { 
 
-	public class TestAudioSyncObjectLoad : MonoBehaviour
+	public class TestPrefabSyncObjectLoad : MonoBehaviour
 	{
 		private GameObject m_Obj;
         private void Awake()

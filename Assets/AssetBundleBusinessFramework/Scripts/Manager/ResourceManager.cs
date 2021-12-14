@@ -25,7 +25,12 @@ namespace AssetBundleBusinessFramework {
 		public GameObject CloneObj = null;	// 实例化出来的 GameObject
 		public bool IsClear = true; //是否清除资源
 		public long GUID = 0;   // Object 的标识，便于查找该对象
-		public bool Already = false;	// 是否已经被释放过
+		public bool Already = false;    // 是否已经被释放过
+
+		//---------------------
+		public bool SetSceneParent = false;    // 是否放在场景节点下面
+		public OnAsyncObjFinish DealFinish = null; // 实例化资源记载完成后的回调
+		public object Param1, Param2, Param3 = null;	// 异步参数
 		public void Reset() {
 			Crc = 0;
 			ResItem = null;
@@ -33,6 +38,9 @@ namespace AssetBundleBusinessFramework {
 			IsClear = true;
 			GUID = 0;
 			Already = false;
+			SetSceneParent = false;
+			DealFinish = null;
+			Param1 = Param2 = Param3 = null;
 		}
 	}
 
@@ -54,13 +62,21 @@ namespace AssetBundleBusinessFramework {
 	}
 
 	public class AsyncCallback {
+		// 加载完成的回调 (针对 ObjectManager 实例化异步加载)
+		public OnAsyncResObjFinish DealResObjFinish = null;
+		// ObjectManager 对应的中间
+		public ResourceObj ResObj = null;
+		// -----------------
+
 		// 加载完成的回调
-		public OnAsyncObjFinish DealFinish = null;
+		public OnAsyncObjFinish DealObjFinish = null;
 		// 回调参数
 		public object Param1 = null, Param2 = null, Param3 = null;
 
 		public void Reset() {
-			DealFinish = null;
+			DealResObjFinish = null;
+			ResObj = null;
+			DealObjFinish = null;			
 			Param1 = null;
 			Param2 = null;
 			Param3 = null;
@@ -77,6 +93,17 @@ namespace AssetBundleBusinessFramework {
 	/// <param name="param3"></param>
 	public delegate void OnAsyncObjFinish(string path, Object obj,
 		object param1=null, object param2 = null, object param3 = null);
+
+	/// <summary>
+	/// 实例化对象异步加载完成的委托
+	/// </summary>
+	/// <param name="path"></param>
+	/// <param name="resObj"></param>
+	/// <param name="param1"></param>
+	/// <param name="param2"></param>
+	/// <param name="param3"></param>
+	public delegate void OnAsyncResObjFinish(string path, ResourceObj resObj,
+		object param1 = null, object param2 = null, object param3 = null);
 
 	/// <summary>
 	/// Resource 管理
@@ -601,10 +628,50 @@ namespace AssetBundleBusinessFramework {
 
 			// 往回调列表里面加回调
 			AsyncCallback callback = m_AsyncCallbackPool.Spawn(true);
-			callback.DealFinish = dealFinish;
+			callback.DealObjFinish = dealFinish;
 			callback.Param1 = param1;
 			callback.Param2 = param2;
 			callback.Param3 = param3;
+			para.CallbackList.Add(callback);
+		}
+
+		/// <summary>
+		/// 异步加载针对实例化资源
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="resObj"></param>
+		/// <param name="dealFinish"></param>
+		/// <param name="priority"></param>
+		public void AsyncLoadResource(string path, ResourceObj resObj, OnAsyncResObjFinish dealFinish, LoadResPriority priority)
+		{
+			ResourceItem item = GetCacheResourceItem(resObj.Crc);
+			if (item != null)
+			{
+				resObj.ResItem = item;
+				if (dealFinish != null)
+				{
+					dealFinish(path, resObj);
+				}
+
+				return;
+			}
+
+			// 判断是否在加载中
+			AsyncLoadResParam para = null;
+			if (m_LoadingAssetDict.TryGetValue(resObj.Crc, out para) == false || para == null)
+			{
+				para = m_AsyncLoadResParamPool.Spawn(true);
+				para.Crc = resObj.Crc;
+				para.Path = path;
+				para.Priority = priority;
+				m_LoadingAssetDict.Add(resObj.Crc, para);
+				m_LoadingAssetList[(int)priority].Add(para);
+			}
+
+			// 往回调列表里面加回调
+			AsyncCallback callback = m_AsyncCallbackPool.Spawn(true);
+			callback.DealResObjFinish = dealFinish;
+			callback.ResObj = resObj;
 			para.CallbackList.Add(callback);
 		}
 
@@ -677,10 +744,19 @@ namespace AssetBundleBusinessFramework {
                     for (int j = 0; j < callbackList.Count; j++)
                     {
 						AsyncCallback callback = callbackList[j];
-                        if (callback!=null && callback.DealFinish!=null)
+						if (callback!=null && callback.DealResObjFinish!=null && callback.ResObj!=null)
                         {
-							callback.DealFinish(loadingItem.Path,obj,callback.Param1,callback.Param2,callback.Param3);
-							callback.DealFinish = null;
+							ResourceObj tempResObj = callback.ResObj;
+							tempResObj.ResItem = item;
+							callback.DealResObjFinish(loadingItem.Path,tempResObj,tempResObj.Param1,tempResObj.Param2,tempResObj.Param3);
+							callback.DealResObjFinish = null;
+							tempResObj = null;
+                        }
+
+                        if (callback!=null && callback.DealObjFinish!=null)
+                        {
+							callback.DealObjFinish(loadingItem.Path,obj,callback.Param1,callback.Param2,callback.Param3);
+							callback.DealObjFinish = null;
 						}
 
 						// 回收

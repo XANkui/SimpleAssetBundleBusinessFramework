@@ -61,6 +61,30 @@ namespace AssetBundleBusinessFramework {
         }
 
         /// <summary>
+        /// 预加载实例化资源
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="count"></param>
+        /// <param name="clear"></param>
+        public void PreloadGameObject(string path,int count=1,bool clear = false) {
+            List<GameObject> tempGameObjectList = new List<GameObject>();
+            for (int i = 0; i < count; i++)
+            {
+                GameObject obj = InstantiateObject(path,false, isClear: clear);
+                tempGameObjectList.Add(obj);
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                GameObject obj = tempGameObjectList[i];
+                ReleaseObject(obj); // 释放是为了，不显示，回收后期使用 因为 clear = false
+                obj = null;
+            }
+
+            tempGameObjectList.Clear();
+        }
+
+        /// <summary>
         /// 同步加载对象
         /// </summary>
         /// <param name="path"></param>
@@ -97,6 +121,102 @@ namespace AssetBundleBusinessFramework {
             return resourceObj.CloneObj;
         }
 
+        /// <summary>
+        /// 异步加载实例化资源
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="dealFinish"></param>
+        /// <param name="priority"></param>
+        /// <param name="setSceneObject"></param>
+        /// <param name="param1"></param>
+        /// <param name="param2"></param>
+        /// <param name="param3"></param>
+        /// <param name="clear"></param>
+        public void InstantiateObjectAsync(string path,OnAsyncObjFinish dealFinish,LoadResPriority priority, bool setSceneObject=false,
+            object param1=null,object param2 = null, object param3 = null,bool clear =true) {
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            uint crc = Crc32.GetCrc32(path);
+
+            ResourceObj resObj = GetObjectFromPool(crc);
+            if (resObj !=null)
+            {
+                if (setSceneObject)
+                {
+                    resObj.CloneObj.transform.SetParent(m_SceneTrans,false);
+                }
+
+                if (dealFinish!=null)
+                {
+                    dealFinish(path,resObj.CloneObj,param1,param2,param3);
+                }
+
+                return;
+            }
+
+            resObj = m_ResourceObjClassPool.Spawn(true);
+            resObj.Crc = crc;
+            resObj.SetSceneParent = setSceneObject;
+            resObj.IsClear = clear;
+            resObj.DealFinish = dealFinish;
+            resObj.Param1 = param1;
+            resObj.Param2 = param2;
+            resObj.Param3 = param3;
+            // 调用 ResourceManager 的异步加载接口
+            ResourceManager.Instance.AsyncLoadResource(path,resObj, OnLoadResourceObjFinish, priority);
+        }
+
+        /// <summary>
+        /// 资源加载完的回调
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="resObj"></param>
+        /// <param name="param1"></param>
+        /// <param name="param2"></param>
+        /// <param name="param3"></param>
+        void OnLoadResourceObjFinish(string path, ResourceObj resObj, object param1 = null, object param2 = null, object param3 = null) {
+            if (resObj==null)
+            {
+                return;
+            }
+
+            if (resObj.ResItem.Obj == null)
+            {
+#if UNITY_EDITOR
+                Debug.LogError($"异步加载资源为空，Path = {path}");
+#endif
+            }
+            else {
+                resObj.CloneObj = GameObject.Instantiate(resObj.ResItem.Obj) as GameObject;
+            }
+
+            if (resObj.CloneObj !=null && resObj.SetSceneParent)
+            {
+                resObj.CloneObj.transform.SetParent(m_SceneTrans,false);
+            }
+
+            if (resObj.DealFinish!=null)
+            {
+                int tempID = resObj.CloneObj.GetInstanceID();
+                if (m_ResourceObjDict.ContainsKey(tempID)==false)
+                {
+                    m_ResourceObjDict.Add(tempID,resObj);
+                }
+
+                resObj.DealFinish(path,resObj.CloneObj,resObj.Param1,resObj.Param2,resObj.Param3);
+            }
+        }
+
+        /// <summary>
+        /// 对象资源回收
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="maxCacheCount"></param>
+        /// <param name="destroyCache"></param>
+        /// <param name="recycleParent"></param>
         public void ReleaseObject(GameObject obj, int maxCacheCount =-1,bool destroyCache=false,bool recycleParent = true) {
             if (obj == null)
             {
