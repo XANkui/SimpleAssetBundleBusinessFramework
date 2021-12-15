@@ -108,6 +108,24 @@ namespace AssetBundleBusinessFramework {
         }
 
         /// <summary>
+        /// 根据实例化对象直接获取离线数据
+        /// </summary>
+        /// <param name="obj">GameObject</param>
+        /// <returns></returns>
+        public OfflineData FindOfflineData(GameObject obj) {
+            OfflineData data = null;
+            ResourceObj resObj = null;
+            m_ResourceObjDict.TryGetValue(obj.GetInstanceID(),out resObj);
+            if (resObj!=null)
+            {
+                data = resObj.OfflineData;
+
+            }
+
+            return data;
+        }
+
+        /// <summary>
         /// 从对象池中取对象
         /// </summary>
         /// <param name="crc"></param>
@@ -124,6 +142,11 @@ namespace AssetBundleBusinessFramework {
                 GameObject obj = resObj.CloneObj;
                 if (System.Object.ReferenceEquals(obj,null)==false)
                 {
+                    if (System.Object.ReferenceEquals(resObj.OfflineData,null)==false)
+                    {
+                        resObj.OfflineData.ResetProp();
+                    }
+
                     resObj.Already = false;
 #if UNITY_EDITOR
                     if (obj.name.EndsWith("(Recycle)"))
@@ -219,6 +242,7 @@ namespace AssetBundleBusinessFramework {
                 if (resourceObj.ResItem.Obj!=null)
                 {
                     resourceObj.CloneObj = GameObject.Instantiate(resourceObj.ResItem.Obj) as GameObject;
+                    resourceObj.OfflineData = resourceObj.CloneObj.GetComponent<OfflineData>();
                 }
             }
             if (setSceneTrans==true)
@@ -310,6 +334,7 @@ namespace AssetBundleBusinessFramework {
             }
             else {
                 resObj.CloneObj = GameObject.Instantiate(resObj.ResItem.Obj) as GameObject;
+                resObj.OfflineData = resObj.CloneObj.GetComponent<OfflineData>();
             }
 
             // 异步加载完成，从字典中移除

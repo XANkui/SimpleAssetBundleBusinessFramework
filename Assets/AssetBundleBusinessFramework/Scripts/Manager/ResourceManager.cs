@@ -30,7 +30,8 @@ namespace AssetBundleBusinessFramework {
 		//---------------------
 		public bool SetSceneParent = false;    // 是否放在场景节点下面
 		public OnAsyncObjFinish DealFinish = null; // 实例化资源记载完成后的回调
-		public object Param1, Param2, Param3 = null;	// 异步参数
+		public object Param1, Param2, Param3 = null;    // 异步参数
+		public OfflineData OfflineData = null;	// 离线数据
 		public void Reset() {
 			Crc = 0;
 			ResItem = null;
@@ -41,6 +42,7 @@ namespace AssetBundleBusinessFramework {
 			SetSceneParent = false;
 			DealFinish = null;
 			Param1 = Param2 = Param3 = null;
+			OfflineData = null;
 		}
 	}
 
