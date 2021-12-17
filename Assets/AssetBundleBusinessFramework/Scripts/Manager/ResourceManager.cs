@@ -297,11 +297,18 @@ namespace AssetBundleBusinessFramework {
             if (IS_LOAD_ASSET_FROM_ASSETBUNDLE==false)
             {
 				item = AssetBundleManager.Instance.FindResourceItem(crc);
-				if (item.Obj != null)
+				if (item!=null && item.Obj != null)
 				{
 					obj = item.Obj as Object;
 				}
 				else {
+
+                    if (item ==null)
+                    {
+						item = new ResourceItem();
+						item.Crc = crc;
+                    }
+
 					obj = LoadAssetByEditor<Object>(path);
 				}
 			}
@@ -761,7 +768,13 @@ namespace AssetBundleBusinessFramework {
 						yield return new WaitForSeconds(0.5f);
 
 						item = AssetBundleManager.Instance.FindResourceItem(loadingItem.Crc);
-                    }
+
+						if (item == null)
+						{
+							item = new ResourceItem();
+							item.Crc = loadingItem.Crc;
+						}
+					}
 #endif
                     if (obj==null)
                     {

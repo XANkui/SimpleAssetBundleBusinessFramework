@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using AssetBundleBusinessFramework.UI;
+using AssetBundleBusinessFramework.UI.Test;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace AssetBundleBusinessFramework.Example { 
 
@@ -17,9 +20,20 @@ namespace AssetBundleBusinessFramework.Example {
         // Start is called before the first frame update
         void Start()
 		{
-			
-		}
+            UIManager.Instance.Init(transform.Find("UIRoot") as RectTransform,
+                transform.Find("UIRoot/WndRoot") as RectTransform,
+                transform.Find("UIRoot/UICamera").GetComponent<Camera>(),
+                transform.Find("UIRoot/EventSystem").GetComponent<EventSystem>());
+            RegisterUI();
 
+            UIManager.Instance.PopUpWindow("MenuPanel.prefab");
+
+
+        }
+
+        void RegisterUI() {
+            UIManager.Instance.Register<MenuUI>("MenuPanel.prefab");
+        }
        
     }
 }

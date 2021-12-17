@@ -216,7 +216,9 @@ namespace AssetBundleBusinessFramework {
 		/// <param name="crc"></param>
 		/// <returns></returns>
 		public ResourceItem FindResourceItem(uint crc) {
-			return m_ResourceItemsDict[crc];
+			ResourceItem resItem = null;
+			m_ResourceItemsDict.TryGetValue(crc,out resItem);
+			return resItem;
 		}
 	}
 }
