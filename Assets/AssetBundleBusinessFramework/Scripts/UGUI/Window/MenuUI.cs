@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using AssetBundleBusinessFramework.Common;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,6 +14,8 @@ namespace AssetBundleBusinessFramework.UI.Test {
             AddButtonClickListener(m_MenuPanel.StartButton,OnClickStart);
             AddButtonClickListener(m_MenuPanel.LoadButton,OnClickLoad);
             AddButtonClickListener(m_MenuPanel.ExitButton,OnClickExit);
+
+            
         }
 
         void OnClickStart() {

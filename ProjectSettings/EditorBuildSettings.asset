@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Example/Scenes/Start_ForAB.unity
+    guid: b514fcaed9df3fc4c84443499987a55a
+  - enabled: 1
+    path: Assets/Example/Scenes/Empty_ForAB.unity
+    guid: 15f99c58728de0a4a9c382e39bc8b9b4
+  - enabled: 1
+    path: Assets/Example/Scenes/Menu_ForAB.unity
+    guid: a7d4bfc044e13bf4cae9a6f4c30414f9
   m_configObjects: {}

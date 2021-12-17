@@ -4,6 +4,10 @@
   <ABList Path="Assets/GameData/Prefabs/Attack.prefab" Crc="192126642" ABName="attack" AssetName="Attack.prefab">
     <ABDependce>shader</ABDependce>
   </ABList>
+  <ABList Path="Assets/GameData/Prefabs/GameStart.prefab" Crc="661067300" ABName="gamestart" AssetName="GameStart.prefab" />
+  <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/LoadingPanel.prefab" Crc="968375833" ABName="loadingpanel" AssetName="LoadingPanel.prefab" />
+  <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/MenuPanel.prefab" Crc="2681775694" ABName="menupanel" AssetName="MenuPanel.prefab" />
+  <ABList Path="Assets/GameData/Prefabs/Effect/ParticleTest1.prefab" Crc="2774616854" ABName="particletest1" AssetName="ParticleTest1.prefab" />
   <ABList Path="Assets/GameData/Shaders/benghuai.shader" Crc="2153760648" ABName="shader" AssetName="benghuai.shader" />
   <ABList Path="Assets/GameData/Shaders/cloud.shader" Crc="4156819275" ABName="shader" AssetName="cloud.shader" />
   <ABList Path="Assets/GameData/Shaders/Skybox.shader" Crc="2040549738" ABName="shader" AssetName="Skybox.shader" />
@@ -11,4 +15,6 @@
   <ABList Path="Assets/GameData/Shaders/Xray.shader" Crc="2720758644" ABName="shader" AssetName="Xray.shader" />
   <ABList Path="Assets/GameData/Sounds/menusound.mp3" Crc="1701716301" ABName="sound" AssetName="menusound.mp3" />
   <ABList Path="Assets/GameData/Sounds/senlin.mp3" Crc="662225670" ABName="sound" AssetName="senlin.mp3" />
+  <ABList Path="Assets/GameData/Prefabs/UGUI/TestUI1.prefab" Crc="278141864" ABName="testui1" AssetName="TestUI1.prefab" />
+  <ABList Path="Assets/GameData/Prefabs/UGUI/TestUI2.prefab" Crc="2652576843" ABName="testui2" AssetName="TestUI2.prefab" />
 </AssetBundleXMLConfig>

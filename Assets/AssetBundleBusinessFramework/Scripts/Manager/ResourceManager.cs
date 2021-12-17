@@ -116,7 +116,7 @@ namespace AssetBundleBusinessFramework {
 		// guid
 		protected long m_Guid = 0;
 		// 是否从 AB 中加载
-		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = false;
+		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = true;
 		// 最长连续卡着加载资源的时间，单位微秒
 		private const long MAX_LOAD_RESET_TIME = 200000;
 		// 缓存使用的资源列表
@@ -579,7 +579,22 @@ namespace AssetBundleBusinessFramework {
 		/// <summary>
 		/// 清理过多的缓存资源
 		/// </summary>
-		void WashOutCacheResource() { }
+		void WashOutCacheResource() {
+			// 当前内存使用大于 80%,进行清除最早没用的资源
+
+
+			//{
+   //             if (m_NoRefrenceAssetMapList.Size()<=0)
+   //             {
+			//		break;
+   //             }
+
+			//	ResourceItem item = m_NoRefrenceAssetMapList.Back();
+			//	DestoryResourceItem(item,true);
+			//	m_NoRefrenceAssetMapList.Pop();
+			//}
+		
+		}
 
 		/// <summary>
 		/// 回收资源
@@ -594,7 +609,7 @@ namespace AssetBundleBusinessFramework {
 
 			if (isDestoryCache==false)
             {
-				//m_NoRefrenceAssetMapList.InsertToHead(item);
+				m_NoRefrenceAssetMapList.InsertToHead(item);
 				return;
             }
 
@@ -602,6 +617,8 @@ namespace AssetBundleBusinessFramework {
 			{
 				return;
 			}
+
+			m_NoRefrenceAssetMapList.Remove(item);
 
 			// 释放 AssetBundle引用
 			AssetBundleManager.Instance.ReleaseAsset(item);

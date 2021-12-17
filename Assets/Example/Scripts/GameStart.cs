@@ -1,4 +1,6 @@
-﻿using AssetBundleBusinessFramework.UI;
+﻿using AssetBundleBusinessFramework.Common;
+using AssetBundleBusinessFramework.Scenes;
+using AssetBundleBusinessFramework.UI;
 using AssetBundleBusinessFramework.UI.Test;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,14 +28,26 @@ namespace AssetBundleBusinessFramework.Example {
                 transform.Find("UIRoot/EventSystem").GetComponent<EventSystem>());
             RegisterUI();
 
-            UIManager.Instance.PopUpWindow("MenuPanel.prefab");
+            GameScenesManager.Instance.Init(this);
 
+            // 预加载 对象
+            ObjectManager.Instance.PreloadGameObject(ConStr.PREFAB_ATTACK_PATH,5);
+
+            GameScenesManager.Instance.LoadScene(ConStr.MENU_SCENE);
 
         }
 
         void RegisterUI() {
-            UIManager.Instance.Register<MenuUI>("MenuPanel.prefab");
+            UIManager.Instance.Register<MenuUI>(ConStr.MENU_PANEL);
+            UIManager.Instance.Register<LoadingUI>(ConStr.LOADING_PANEL);
         }
-       
+
+        private void Update()
+        {
+            UIManager.Instance.OnUpdate();
+
+           
+        }
+
     }
 }

@@ -39,12 +39,12 @@ namespace AssetBundleBusinessFramework {
         /// <summary>
         /// 清空对象池
         /// </summary>
-        public void CleatCache() {
+        public void ClearCache() {
             List<uint> tempList = new List<uint>();
             foreach (uint key in m_ObjectPoolDict.Keys)
             {
                 List<ResourceObj> st = m_ObjectPoolDict[key];
-                for (int i = st.Count; i >= 0; i--)
+                for (int i = st.Count-1; i >= 0; i--)
                 {
                     ResourceObj resObj = st[i];
                     if (System.Object.ReferenceEquals(resObj.CloneObj,null)==false
@@ -54,6 +54,7 @@ namespace AssetBundleBusinessFramework {
                         m_ResourceObjDict.Remove(resObj.CloneObj.GetInstanceID());
                         resObj.Reset();
                         m_ResourceObjClassPool.Recycle(resObj);
+                        st.Remove(resObj);
                     }
                 }
 
