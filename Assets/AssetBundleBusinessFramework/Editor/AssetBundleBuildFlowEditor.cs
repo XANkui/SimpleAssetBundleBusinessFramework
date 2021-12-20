@@ -13,9 +13,11 @@ namespace AssetBundleBusinessFramework
 	public class AssetBundleBuildFlowEditor 
 	{
 		// AB 打包输出路径
-		private readonly static string AB_BUILD_OUTPUT_PATH = Application.streamingAssetsPath;
+		private readonly static string AB_BUILD_OUTPUT_PATH = Application.dataPath+ "/../AssetBundle/" + EditorUserBuildSettings.activeBuildTarget.ToString();
 		// AB 配置路径
 		private readonly static string ABCONFIG_PATH = "Assets/AssetBundleBusinessFramework/Editor/ABConfig.asset";
+
+		private  readonly static string AB_BYTE_PATH = "Assets/GameData/Data/ABData/AssetBundleConfig.bytes";
 		// key ab包名，value 是路径，所有 文件夹 ab 包的 dic 
 		private static Dictionary<string, string> m_AllFileDirDict = new Dictionary<string, string>();
 		// 记录所有 ab 资源路径的列表，用于过滤使用
@@ -217,15 +219,30 @@ namespace AssetBundleBusinessFramework
 					}
 				}
 
+				// 判断是否存在该路径文件夹
+				if (Directory.Exists(AB_BUILD_OUTPUT_PATH) == false)
+				{
+					Directory.CreateDirectory(AB_BUILD_OUTPUT_PATH);
+
+				}
+
 				// 删除冗余废弃的AB包
 				DeleteObsoleteAB();
 
 				// 生成自己的配置表
 				WriteData(resPathDict);
-
-				// 把AB包输出到路径文件夹下
-				BuildPipeline.BuildAssetBundles(AB_BUILD_OUTPUT_PATH, BuildAssetBundleOptions.ChunkBasedCompression,
+                
+                // 把AB包输出到路径文件夹下
+                AssetBundleManifest assetBundleManifest = BuildPipeline.BuildAssetBundles(AB_BUILD_OUTPUT_PATH, BuildAssetBundleOptions.ChunkBasedCompression,
 					EditorUserBuildSettings.activeBuildTarget);
+
+				if (assetBundleManifest == null)
+				{
+					Debug.LogError("AssetBundle 打包失败");
+				}
+				else {
+					Debug.Log("AssetBundle 打包成功");
+				}
 			}
 		}
 
@@ -293,11 +310,17 @@ namespace AssetBundleBusinessFramework
             {
 				abBase.Path = "";
             }
-			string bytePath ="Assets/GameData/Data/ABData/AssetBundleConfig.bytes";
-			FileStream fs = new FileStream(bytePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+			
+			FileStream fs = new FileStream(AB_BYTE_PATH, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+			fs.Seek(0,SeekOrigin.Begin);
+			fs.SetLength(0);			
 			BinaryFormatter bf = new BinaryFormatter();
 			bf.Serialize(fs,xmlConfig);
 			fs.Close();
+
+			AssetDatabase.Refresh();
+			SetABNameLabel("assetbundleconfig", AB_BYTE_PATH);
+			
 		}
 
 		/// <summary>
@@ -312,6 +335,8 @@ namespace AssetBundleBusinessFramework
             {
 				if (IsContainABNameForObsolete(fileInfos[i].Name, allBundlesName)
 					|| fileInfos[i].Name.EndsWith(".meta")
+					|| fileInfos[i].Name.EndsWith(".manifest") // 不删除这个，可以加速打包
+					|| fileInfos[i].Name.EndsWith("assetbundleconfig") // 不删除这个，可以加速打包
 					)
 				{
 					continue;

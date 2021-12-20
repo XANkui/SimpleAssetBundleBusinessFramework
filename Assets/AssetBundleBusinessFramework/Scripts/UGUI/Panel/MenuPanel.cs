@@ -10,5 +10,7 @@ namespace AssetBundleBusinessFramework.UI.Test {
 		public Button StartButton;
 		public Button LoadButton;
 		public Button ExitButton;
+		public Image Test1Image;
+		public Image Test2Image;
 	}
 }

@@ -1,18 +1,19 @@
 ﻿using AssetBundleBusinessFramework.Common;
 using AssetBundleBusinessFramework.Scenes;
+using AssetBundleBusinessFramework.Tools;
 using AssetBundleBusinessFramework.UI;
 using AssetBundleBusinessFramework.UI.Test;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace AssetBundleBusinessFramework.Example { 
 
-	public class GameStart : MonoBehaviour
-	{
-        private void Awake()
+	public class GameStart : MonoSingleton<GameStart>
+    {
+        protected override void Awake()
         {
+            base.Awake();
+
             DontDestroyOnLoad(gameObject);
 			AssetBundleManager.Instance.LoadAssetBundleConfig();
             ResourceManager.Instance.Init(this);
@@ -33,6 +34,7 @@ namespace AssetBundleBusinessFramework.Example {
             // 预加载 对象
             ObjectManager.Instance.PreloadGameObject(ConStr.PREFAB_ATTACK_PATH,5);
 
+
             GameScenesManager.Instance.LoadScene(ConStr.MENU_SCENE);
 
         }
@@ -45,8 +47,7 @@ namespace AssetBundleBusinessFramework.Example {
         private void Update()
         {
             UIManager.Instance.OnUpdate();
-
-           
+  
         }
 
     }

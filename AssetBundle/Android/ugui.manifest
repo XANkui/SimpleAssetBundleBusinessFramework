@@ -1,0 +1,19 @@
+ManifestFileVersion: 0
+CRC: 4193544327
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 72cf6973319cbd287358d7890307d2f7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9e6ad29cbd2df8fbe1a15315db0e51ab
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/GameData/UGUI/dog.png
+- Assets/GameData/UGUI/bird.jpg
+Dependencies: []

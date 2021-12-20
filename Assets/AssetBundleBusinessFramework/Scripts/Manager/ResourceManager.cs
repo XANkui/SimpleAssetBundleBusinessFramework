@@ -116,9 +116,12 @@ namespace AssetBundleBusinessFramework {
 		// guid
 		protected long m_Guid = 0;
 		// 是否从 AB 中加载
-		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = true;
+		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = false;
 		// 最长连续卡着加载资源的时间，单位微秒
 		private const long MAX_LOAD_RESET_TIME = 200000;
+		// 最大缓存个数
+		private const int MAX_CACHE_COUNT = 500;
+
 		// 缓存使用的资源列表
 		public Dictionary<uint, ResourceItem> AssetDict { get; set; } = new Dictionary<uint, ResourceItem>();
 		// 缓存应用计数为零的资源列表，达到缓存最大的时候，释放列表里面最早的没有应用的资源
@@ -134,6 +137,8 @@ namespace AssetBundleBusinessFramework {
 		protected List<AsyncLoadResParam>[] m_LoadingAssetList = new List<AsyncLoadResParam>[(int)LoadResPriority.RES_NUM];
 		// 正在异步加载的Dict 
 		protected Dictionary<uint, AsyncLoadResParam> m_LoadingAssetDict = new Dictionary<uint, AsyncLoadResParam>();
+
+		
 
 		/// <summary>
 		/// 初始化
@@ -363,12 +368,17 @@ namespace AssetBundleBusinessFramework {
 			{
 				
 				item = AssetBundleManager.Instance.FindResourceItem(crc);
-				if (item.Obj != null)
+				if (item != null && item.AssetBundle != null)
 				{
-					obj = (T)item.Obj;
-				}
-				else {
-					obj = LoadAssetByEditor<T>(path);
+
+					if (item.Obj != null)
+					{
+						obj = (T)item.Obj;
+					}
+					else
+					{
+						obj = item.AssetBundle.LoadAsset<T>(item.AssetName);
+					}
 				}
 			}
 #endif
@@ -580,20 +590,15 @@ namespace AssetBundleBusinessFramework {
 		/// 清理过多的缓存资源
 		/// </summary>
 		void WashOutCacheResource() {
-			// 当前内存使用大于 80%,进行清除最早没用的资源
-
-
-			//{
-   //             if (m_NoRefrenceAssetMapList.Size()<=0)
-   //             {
-			//		break;
-   //             }
-
-			//	ResourceItem item = m_NoRefrenceAssetMapList.Back();
-			//	DestoryResourceItem(item,true);
-			//	m_NoRefrenceAssetMapList.Pop();
-			//}
-		
+            // 当大于缓存个数时，进行一半释放
+            while (m_NoRefrenceAssetMapList.Size() >= MAX_CACHE_COUNT)
+            {
+                for (int i = 0; i < MAX_CACHE_COUNT/2; i++)
+                {
+					ResourceItem resItem = m_NoRefrenceAssetMapList.Back();
+					DestoryResourceItem(resItem, true);
+                }
+            }
 		}
 
 		/// <summary>
@@ -669,7 +674,7 @@ namespace AssetBundleBusinessFramework {
 		}
 
 		public void AsyncLoadResource(string path,OnAsyncObjFinish dealFinish,LoadResPriority priority,
-			object param1=null, object param2=null, object param3=null,uint crc =0) {
+			bool isSprite = false,object param1=null, object param2=null, object param3=null,uint crc =0) {
             if (crc==0)
             {
 				crc = Crc32.GetCrc32(path);
@@ -693,6 +698,7 @@ namespace AssetBundleBusinessFramework {
 				para = m_AsyncLoadResParamPool.Spawn(true);
 				para.Crc = crc;
 				para.Path = path;
+				para.IsSprite = isSprite;
 				para.Priority = priority;
 				m_LoadingAssetDict.Add(crc,para);
 				m_LoadingAssetList[(int)priority].Add(para);
@@ -759,11 +765,20 @@ namespace AssetBundleBusinessFramework {
 			bool IsHasYield = false;
 			while (true) {
 
-				
 				IsHasYield = false;
 				
                 for (int i = 0; i < (int)LoadResPriority.RES_NUM; i++)
                 {
+                    if (m_LoadingAssetList[(int)LoadResPriority.RES_HIGHT].Count>0)
+                    {
+						i = (int)LoadResPriority.RES_HIGHT;
+
+					}else if (m_LoadingAssetList[(int)LoadResPriority.RES_MIDDLE].Count > 0)
+					{
+						i = (int)LoadResPriority.RES_MIDDLE;
+
+					}
+
 					List<AsyncLoadResParam> loadingList = m_LoadingAssetList[i];
                     if (loadingList.Count<=0)
                     {
@@ -780,7 +795,16 @@ namespace AssetBundleBusinessFramework {
 #if UNITY_EDITOR
                     if (IS_LOAD_ASSET_FROM_ASSETBUNDLE ==false)
                     {
-						obj = LoadAssetByEditor<Object>(loadingItem.Path);
+						
+						if (loadingItem.IsSprite == true)
+						{
+							obj = LoadAssetByEditor<Sprite>(loadingItem.Path);
+						}
+						else
+						{
+							obj = LoadAssetByEditor<Object>(loadingItem.Path);
+						}
+
 						// 模拟异步加载
 						yield return new WaitForSeconds(0.5f);
 

@@ -80,7 +80,7 @@ namespace AssetBundleBusinessFramework.UI {
 				return;
             }
 
-			ResourceManager.Instance.AsyncLoadResource(path, OnLoadSpriteFinish,LoadResPriority.RES_MIDDLE,image,setNativeSize);
+			ResourceManager.Instance.AsyncLoadResource(path, OnLoadSpriteFinish,LoadResPriority.RES_MIDDLE,true,image,setNativeSize);
 		}
 
 		/// <summary>
