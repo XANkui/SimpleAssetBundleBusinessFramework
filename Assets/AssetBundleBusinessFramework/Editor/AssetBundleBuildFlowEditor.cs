@@ -29,7 +29,7 @@ namespace AssetBundleBusinessFramework
 		// 记录所有 ab 资源路径的列表，用于 prefab xml config 过滤使用
 		private static List<string> m_XmlConfigFilterList = new List<string>();
 
-		[MenuItem("MyAssetBundleTool/打包 AB 包")]
+		[MenuItem("MyTools/MyAssetBundle/打包 AB 包")]
 		public static void Build() {
 
 			// 收集 ABConfig 的所有需要打AB包的资源和依赖资源

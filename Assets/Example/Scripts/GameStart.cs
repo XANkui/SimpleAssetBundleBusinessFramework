@@ -23,6 +23,8 @@ namespace AssetBundleBusinessFramework.Example {
         // Start is called before the first frame update
         void Start()
 		{
+            LoadConfiger();
+
             UIManager.Instance.Init(transform.Find("UIRoot") as RectTransform,
                 transform.Find("UIRoot/WndRoot") as RectTransform,
                 transform.Find("UIRoot/UICamera").GetComponent<Camera>(),
@@ -42,6 +44,10 @@ namespace AssetBundleBusinessFramework.Example {
         void RegisterUI() {
             UIManager.Instance.Register<MenuUI>(ConStr.MENU_PANEL);
             UIManager.Instance.Register<LoadingUI>(ConStr.LOADING_PANEL);
+        }
+
+        void LoadConfiger() { 
+        
         }
 
         private void Update()

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -49,7 +50,7 @@ namespace AssetBundleBusinessFramework {
         /// <typeparam name="T"></typeparam>
         /// <param name="path"></param>
         /// <returns></returns>
-        public T XmlDeserialize<T>(string path)where T:class
+        public static T XmlDeserialize<T>(string path)where T:class
         {
             T t = default(T);
             try
@@ -70,12 +71,39 @@ namespace AssetBundleBusinessFramework {
         }
 
         /// <summary>
+        /// xml 文件读取
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static System.Object XmlDeserialize(string path, Type type) 
+        {
+            System.Object obj = null;
+            try
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                {
+                    XmlSerializer xs = new XmlSerializer(type);
+                    obj = xs.Deserialize(fs);
+                }
+            }
+            catch (System.Exception e)
+            {
+
+                Debug.LogError($"此 xml 无法转为 二进制 {path} ：{e}");
+            }
+
+            return obj;
+        }
+
+        /// <summary>
         /// 运行时读取 xml 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="path"></param>
         /// <returns></returns>
-        public T XmlDeserializeRuntime<T>(string path) where T : class{
+        public static T XmlDeserializeRuntime<T>(string path) where T : class{
             T t = default(T);
             TextAsset textAsset = ResourceManager.Instance.LoadResource<TextAsset>(path);
             if (textAsset == null)
@@ -108,7 +136,7 @@ namespace AssetBundleBusinessFramework {
         /// <param name="path"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public bool BinarySeralize(string path, System.Object obj) {
+        public static bool BinarySeralize(string path, System.Object obj) {
             try
             {
                 using (FileStream fs = new FileStream(path,FileMode.Create,FileAccess.ReadWrite,FileShare.ReadWrite))
@@ -133,7 +161,7 @@ namespace AssetBundleBusinessFramework {
         /// <typeparam name="T"></typeparam>
         /// <param name="path"></param>
         /// <returns></returns>
-        public T BinaryDeserialize<T>(string path) where T : class
+        public static T BinaryDeserialize<T>(string path) where T : class
         {
             T t = default(T);
             TextAsset textAsset = ResourceManager.Instance.LoadResource<TextAsset>(path);
