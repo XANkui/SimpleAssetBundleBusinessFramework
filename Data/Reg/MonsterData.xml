@@ -8,7 +8,7 @@
 			<variable name="OutLook" col="预制路径" type="string"/>
 			<variable name="Level" col="怪物等级" type="int"/>
 			<variable name="Rare" col="怪物稀有度" type="int"/>
-			<variable name="Height" col="怪物稀有度" type="float"/>
+			<variable name="Height" col="怪物高度" type="float"/>
 		</list>
 	</variable>
 	
