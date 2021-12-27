@@ -5,8 +5,10 @@ using UnityEngine;
 
 namespace AssetBundleBusinessFramework {
 
-	public class CFP { 
+	public class CFG {
 		// 配置表路径
+		public const string TABLE_MONSTER = "Assets/GameData/Data/Binary/AssetBundleBusinessFramework.MonsterData.bytes";
+		public const string TABLE_BUFF = "Assets/GameData/Data/Binary/AssetBundleBusinessFramework.BuffData.bytes";
 	}
 
 	public class ConfigManager : Singleton<ConfigManager>

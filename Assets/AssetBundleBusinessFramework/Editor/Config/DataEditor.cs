@@ -130,6 +130,21 @@ namespace AssetBundleBusinessFramework {
             EditorUtility.ClearProgressBar();
         }
 
+        [MenuItem("Assets/ xml 转 Excel")]
+        public static void AssetXmlToExcel()
+        {
+            UnityEngine.Object[] objs = Selection.objects;
+            for (int i = 0; i < objs.Length; i++)
+            {
+                EditorUtility.DisplayProgressBar("文件下的 xml 转 Excel", "正在扫描" + objs[i].name + " ... ...", 1.0f / objs.Length * i);
+                XmlToEcxel(objs[i].name);
+            }
+
+            AssetDatabase.Refresh();
+            EditorUtility.ClearProgressBar();
+        }
+
+
         [MenuItem("MyTools/Xml/Xml转成二进制")]
         public static void AllXmlToBinary() {
             string path = Application.dataPath.Replace("Assets","")+XmlPath;
@@ -149,14 +164,18 @@ namespace AssetBundleBusinessFramework {
             EditorUtility.ClearProgressBar();
         }
 
-        [MenuItem("MyTools/Xml/Xml转Excel")]
-        public static void XmlToEcxel() {
-            string name = "MonsterData";
+       
+        private static void XmlToEcxel(string name) {
+
+            // 去除可能的带命名空间
+            string[] splitNames = name.Split('.');
+            name = splitNames[splitNames.Length-1];
+
 
             string className = "";
             string xmlName = "";
             string excelName = "";
-            Dictionary<string, SheetClass> allSheetClassDict = ReadReg(name,ref className,ref xmlName,ref excelName);
+            Dictionary<string, SheetClass> allSheetClassDict = ReadReg(name,ref className,ref xmlName,ref excelName); // 注意可能的命名空间
 
             object data = GetObjectFromXml(className);
 
@@ -203,6 +222,7 @@ namespace AssetBundleBusinessFramework {
                         {
                             ExcelRange range = workSheet.Cells[1,i+1];
                             range.Value = sheetData.AllName[i];
+                            range.AutoFitColumns();
                         }
 
                         for (int i = 0; i < sheetData.AllData.Count; i++)
@@ -212,6 +232,7 @@ namespace AssetBundleBusinessFramework {
                             {
                                 ExcelRange range = workSheet.Cells[i+2,j+1];
                                 range.Value = rowData.RowDataDict[sheetData.AllName[j]];
+                                range.AutoFitColumns();
                             }
                         }
                     }

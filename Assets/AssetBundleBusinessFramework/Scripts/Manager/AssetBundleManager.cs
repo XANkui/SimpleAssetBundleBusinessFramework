@@ -73,7 +73,12 @@ namespace AssetBundleBusinessFramework {
 		/// </summary>
 		/// <returns></returns>
 		public bool LoadAssetBundleConfig() {
-			Debug.LogWarning("LoadAssetBundleConfig ==========");
+            if (ResourceManager.Instance.IS_LOAD_ASSET_FROM_ASSETBUNDLE==false)
+            {
+				return false;
+            }
+            Debug.LogWarning("LoadAssetBundleConfig ==========");
+			m_ResourceItemsDict.Clear();
 			string configPath = Application.streamingAssetsPath + "/assetbundleconfig";
 			AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
 			TextAsset textAsset = configAB.LoadAsset<TextAsset>("assetbundleconfig");

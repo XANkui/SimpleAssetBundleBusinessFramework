@@ -116,7 +116,7 @@ namespace AssetBundleBusinessFramework {
 		// guid
 		protected long m_Guid = 0;
 		// 是否从 AB 中加载
-		private readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = false;
+		internal readonly bool IS_LOAD_ASSET_FROM_ASSETBUNDLE = false;
 		// 最长连续卡着加载资源的时间，单位微秒
 		private const long MAX_LOAD_RESET_TIME = 200000;
 		// 最大缓存个数
@@ -379,6 +379,15 @@ namespace AssetBundleBusinessFramework {
 					{
 						obj = item.AssetBundle.LoadAsset<T>(item.AssetName);
 					}
+				}
+				else {
+                    if (item==null)
+                    {
+						item = new ResourceItem();
+						item.Crc = crc;
+                    }
+
+					obj = LoadAssetByEditor<T>(path);
 				}
 			}
 #endif

@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BuffData xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <AllBuffList Id="1" Name="全 Buff0" OutLook="Assets/GameData/... 0" Time="6.00879" BuffType="Du" />
+  <AllBuffList Id="2" Name="全 Buff1" OutLook="Assets/GameData/... 1" Time="3.17421436" BuffType="BingDong" />
+  <AllBuffList Id="3" Name="全 Buff2" OutLook="Assets/GameData/... 2" Time="2.62100887" BuffType="RanShao" />
+  <AllBuffList Id="4" Name="全 Buff3" OutLook="Assets/GameData/... 3" Time="7.2787447" BuffType="None" />
+  <AllBuffList Id="5" Name="全 Buff4" OutLook="Assets/GameData/... 4" Time="2.594143" BuffType="None" />
+  <AllBuffList Id="6" Name="全 Buff5" OutLook="Assets/GameData/... 5" Time="5.53876162" BuffType="RanShao" />
+  <AllBuffList Id="7" Name="全 Buff6" OutLook="Assets/GameData/... 6" Time="3.54401326" BuffType="BingDong" />
+  <AllBuffList Id="8" Name="全 Buff7" OutLook="Assets/GameData/... 7" Time="1.87674451" BuffType="Du" />
+  <AllBuffList Id="9" Name="全 Buff8" OutLook="Assets/GameData/... 8" Time="9.157187" BuffType="BingDong" />
+  <AllBuffList Id="10" Name="全 Buff9" OutLook="Assets/GameData/... 9" Time="2.74887943" BuffType="RanShao" />
+  <MonsterBuffList Id="1" Name="Monster Buff0" OutLook="Assets/GameData/... 0" Time="5.45887566" BuffType="None" />
+  <MonsterBuffList Id="2" Name="Monster Buff1" OutLook="Assets/GameData/... 1" Time="5.06875467" BuffType="RanShao" />
+  <MonsterBuffList Id="3" Name="Monster Buff2" OutLook="Assets/GameData/... 2" Time="3.824952" BuffType="Du" />
+  <MonsterBuffList Id="4" Name="Monster Buff3" OutLook="Assets/GameData/... 3" Time="3.81629968" BuffType="RanShao" />
+  <MonsterBuffList Id="5" Name="Monster Buff4" OutLook="Assets/GameData/... 4" Time="3.382167" BuffType="BingDong" />
+  <MonsterBuffList Id="6" Name="Monster Buff5" OutLook="Assets/GameData/... 5" Time="1.81505108" BuffType="Du" />
+  <MonsterBuffList Id="7" Name="Monster Buff6" OutLook="Assets/GameData/... 6" Time="3.82152057" BuffType="Du" />
+  <MonsterBuffList Id="8" Name="Monster Buff7" OutLook="Assets/GameData/... 7" Time="7.59981441" BuffType="RanShao" />
+  <MonsterBuffList Id="9" Name="Monster Buff8" OutLook="Assets/GameData/... 8" Time="3.98064637" BuffType="None" />
+  <MonsterBuffList Id="10" Name="Monster Buff9" OutLook="Assets/GameData/... 9" Time="7.15416145" BuffType="Du" />
+</BuffData>

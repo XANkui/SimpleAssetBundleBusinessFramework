@@ -46,8 +46,9 @@ namespace AssetBundleBusinessFramework.Example {
             UIManager.Instance.Register<LoadingUI>(ConStr.LOADING_PANEL);
         }
 
-        void LoadConfiger() { 
-        
+        void LoadConfiger() {
+            ConfigManager.Instance.LoadData<MonsterData>(CFG.TABLE_MONSTER);
+            ConfigManager.Instance.LoadData<BuffData>(CFG.TABLE_BUFF);
         }
 
         private void Update()
