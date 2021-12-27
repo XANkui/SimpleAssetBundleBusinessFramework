@@ -2,32 +2,32 @@
 
 <data name="BuffData" from="Buff.xlsx" to="BuffData.xml">
 	<variable name="AllBuffList" type="list">
-		<list name="BuffBase" sheetname="所有Buff配置" mainKey="Id">
+		<list name="BuffBase" sheetname="所有Buff配置" mainkey="Id">
 			<variable name="Id" col="ID" type="int"/>
 			<variable name="Name" col="名字" type="string"/>
 			<variable name="OutLook" col="预制路径" type="string"/>
 			<variable name="Time" col="时长" type="float"/>
 			<variable name="BuffType" col="Buff类型" type="enum"/>		
 			<variable name="AllString" col="测试List类型" type="listStr" split=":"/>	
-			<variable name="AllBuffTest"  type="list" foreign="ID">	
-				<list name="BuffTest" sheetname="所有buff的测试list" >
-					<variable name="Id" col="TestID" type="int"/>
+			<variable name="AllBuffTest" col="测试类例" type="list" split="\n">	
+				<list name="BuffTest" sheetname="所有buff的测试list" split=";">
+					<variable name="Id" col="ID" type="int"/>
 					<variable name="Name" col="名字" type="string"/>
 				</list>
 			</variable>			
 		</list>
 	</variable>
 	<variable name="MonsterBuffList" type="list">
-		<list name="BuffBase" sheetname="所有怪物Buff配置" mainKey="Id">
+		<list name="BuffBase" sheetname="所有怪物Buff配置" mainkey="Id">
 			<variable name="Id" col="ID" type="int"/>
 			<variable name="Name" col="名字" type="string"/>
 			<variable name="OutLook" col="预制路径" type="string"/>
 			<variable name="Time" col="时长" type="float"/>
 			<variable name="BuffType" col="Buff类型" type="enum"/>		
 			<variable name="AllString" col="测试List类型" type="listStr" split=":"/>	
-			<variable name="AllBuffTest" type="list" foreign="ID" >	
-				<list name="BuffTest" sheetname="怪物buff的测试list" >
-					<variable name="Id" col="TestID" type="int"/>
+			<variable name="AllBuffTest" col="测试类例" type="list" split="\n">	
+				<list name="BuffTest" sheetname="怪物buff的测试list" split=";">
+					<variable name="Id" col="ID" type="int"/>
 					<variable name="Name" col="名字" type="string"/>
 				</list>
 			</variable>					

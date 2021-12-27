@@ -20,6 +20,18 @@ namespace AssetBundleBusinessFramework
                 buff.OutLook = "Assets/GameData/... "+i;
                 buff.Time = Random.Range(0.5f,10);
                 buff.BuffType = (BuffEnum)Random.Range(0,4);
+                buff.AllString = new List<string>();
+                buff.AllString.Add("测试"+i);
+                buff.AllString.Add("Test"+i);
+                buff.AllBuffTest = new List<BuffTest>();
+                int count = Random.Range(0,4);
+                for (int j = 0; j < count; j++)
+                {
+                    BuffTest test = new BuffTest();
+                    test.Id = j + Random.Range(5,24);
+                    test.Name = "Name" + test.Id;
+                    buff.AllBuffTest.Add(test);
+                }
                 AllBuffList.Add(buff);
             }
 
@@ -32,6 +44,17 @@ namespace AssetBundleBusinessFramework
                 buff.OutLook = "Assets/GameData/... " + i;
                 buff.Time = Random.Range(0.5f, 10);
                 buff.BuffType = (BuffEnum)Random.Range(0, 4);
+                buff.AllString = new List<string>();
+                buff.AllString.Add("测试" + i);
+                buff.AllBuffTest = new List<BuffTest>();
+                int count = Random.Range(0, 4);
+                for (int j = 0; j < count; j++)
+                {
+                    BuffTest test = new BuffTest();
+                    test.Id = j + Random.Range(5, 24);
+                    test.Name = "Name" + test.Id;
+                    buff.AllBuffTest.Add(test);
+                }
                 MonsterBuffList.Add(buff);
             }
         }
@@ -63,6 +86,8 @@ namespace AssetBundleBusinessFramework
 
         [XmlElement("MonsterBuffList")]
         public List<BuffBase> MonsterBuffList { get; set; }
+
+        
     }
 
     public enum BuffEnum { 
@@ -86,6 +111,21 @@ namespace AssetBundleBusinessFramework
         [XmlAttribute("Time")]
         public float Time { get; set; }
         [XmlAttribute("BuffType")]
+
         public BuffEnum BuffType { get; set; }
+        [XmlAttribute("AllString")]
+        public List<string> AllString { get; set; }
+
+        [XmlElement("AllBuffTest")]
+        public List<BuffTest> AllBuffTest { get; set; }
+    }
+
+    [System.Serializable]
+    public class BuffTest {
+        [XmlAttribute("Id")]
+        public int Id { get; set; }
+
+        [XmlAttribute("Name")]
+        public string Name { get; set; }
     }
 }

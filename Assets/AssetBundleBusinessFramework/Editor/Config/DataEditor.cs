@@ -192,7 +192,7 @@ namespace AssetBundleBusinessFramework {
 
             for (int i = 0; i < outSheetClassList.Count; i++)
             {
-                ReadData(data,outSheetClassList[i],allSheetClassDict,sheetDataDict);
+                ReadData(data,outSheetClassList[i],allSheetClassDict,sheetDataDict,"");
             }
 
             string xlsxPath = Application.dataPath.Replace("Assets","/Data/Excel/"+excelName);
@@ -205,7 +205,7 @@ namespace AssetBundleBusinessFramework {
             try
             {
                 FileInfo xlsxFile = new FileInfo(xlsxPath);
-                if (xlsxFile.Exists==true)
+                if (xlsxFile.Exists == true)
                 {
                     xlsxFile.Delete();
                     xlsxFile = new FileInfo(xlsxPath);
@@ -220,7 +220,7 @@ namespace AssetBundleBusinessFramework {
                         SheetData sheetData = sheetDataDict[str];
                         for (int i = 0; i < sheetData.AllName.Count; i++)
                         {
-                            ExcelRange range = workSheet.Cells[1,i+1];
+                            ExcelRange range = workSheet.Cells[1, i + 1];
                             range.Value = sheetData.AllName[i];
                             range.AutoFitColumns();
                         }
@@ -230,9 +230,15 @@ namespace AssetBundleBusinessFramework {
                             RowData rowData = sheetData.AllData[i];
                             for (int j = 0; j < sheetData.AllData[i].RowDataDict.Count; j++)
                             {
-                                ExcelRange range = workSheet.Cells[i+2,j+1];
-                                range.Value = rowData.RowDataDict[sheetData.AllName[j]];
+                                ExcelRange range = workSheet.Cells[i + 2, j + 1];
+                                string value = rowData.RowDataDict[sheetData.AllName[j]];
+                                range.Value = value;
                                 range.AutoFitColumns();
+                                // 可能的换行处理
+                                if (value.Contains("\n") || value.Contains("\r\n"))
+                                {
+                                    range.Style.WrapText = true;
+                                }
                             }
                         }
                     }
@@ -240,11 +246,14 @@ namespace AssetBundleBusinessFramework {
                     package.Save();
                 }
             }
-            catch (Exception e)
-            {
+            //catch (Exception e)
+            //{
 
-                Debug.LogError(e);
-            }
+            //    Debug.LogError(e);
+            //    Debug.LogError($"生成 {xlsxPath} 失败");
+            //    return;
+            //}
+            finally { }
 
             Debug.Log($"生成 {xlsxPath} 成功");
         }
@@ -323,7 +332,7 @@ namespace AssetBundleBusinessFramework {
         /// <param name="allSheetClassDict"></param>
         /// <param name="sheetDataDict"></param>
         private static void ReadData(object data, SheetClass sheetClass,Dictionary<string,SheetClass> allSheetClassDict,
-           Dictionary<string, SheetData> sheetDataDict) {
+           Dictionary<string, SheetData> sheetDataDict, string mainKey) {
 
             List<VarClass> varList = sheetClass.VarList;
             VarClass varClass = sheetClass.ParentVar;
@@ -333,6 +342,13 @@ namespace AssetBundleBusinessFramework {
                 BindingFlags.Default | BindingFlags.InvokeMethod, null,dataList,new object[] { }));
 
             SheetData sheetData = new SheetData();
+
+            if (string.IsNullOrEmpty(varClass.Foreign)==false)
+            {
+                sheetData.AllName.Add(varClass.Foreign);
+                sheetData.AllType.Add(varClass.Type);
+            }
+            
             for (int i = 0; i < varList.Count; i++)
             {
                 if (string.IsNullOrEmpty(varList[i].Col)==false)
@@ -342,6 +358,7 @@ namespace AssetBundleBusinessFramework {
                 }
             }
 
+            string tempKey = mainKey;
             for (int i = 0; i < listCount; i++)
             {
                 object item = dataList.GetType().InvokeMember("get_Item",
@@ -349,12 +366,34 @@ namespace AssetBundleBusinessFramework {
 
                 RowData rowData = new RowData();
 
+                if (string.IsNullOrEmpty(varClass.Foreign)==false && string.IsNullOrEmpty(tempKey)==false)
+                {
+                    rowData.RowDataDict.Add(varClass.Foreign,tempKey);
+                }
+
+                if (string.IsNullOrEmpty(sheetClass.MainKey)==false)
+                {
+                    mainKey = GetMemberValue(item,sheetClass.MainKey).ToString();
+                }
+
                 for (int j = 0; j < varList.Count; j++)
                 {
-                    if (varList[j].Type == "list")
+                    if (varList[j].Type == "list" && string.IsNullOrEmpty(varList[j].SplitStr)==true)
                     {
                         SheetClass tempSheetClass = allSheetClassDict[varList[j].ListSheetName];
-                        ReadData(item, tempSheetClass, allSheetClassDict, sheetDataDict);
+                        ReadData(item, tempSheetClass, allSheetClassDict, sheetDataDict,mainKey);
+                    }
+                    else if (varList[j].Type == "list")
+                    {
+                        SheetClass tempSheetClass = allSheetClassDict[varList[j].ListSheetName];
+                        string value = GetSplitStrList(item,varList[j], tempSheetClass);
+                        rowData.RowDataDict.Add(varList[j].Col, value);
+                    }
+                    else if (varList[j].Type == "listStr" || varList[j].Type=="listFloat"
+                        || varList[j].Type == "listInt" || varList[j].Type == "listBool")
+                    {
+                        string value = GetSplitbaseList(item,varList[j]);
+                        rowData.RowDataDict.Add(varList[j].Col,value);
                     }
                     else {
                         object value = GetMemberValue(item,varList[j].Name);
@@ -379,6 +418,82 @@ namespace AssetBundleBusinessFramework {
                 }
             }
             
+        }
+
+        /// <summary>
+        /// 获取本身是一个类列表,但是数据比较少(没有办法确定父级结构的)
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="varClass"></param>
+        /// <param name="sheetClass"></param>
+        /// <returns></returns>
+        private static string GetSplitStrList(object data, VarClass varClass,SheetClass sheetClass) {
+            string split = varClass.SplitStr;
+            string classSplit = sheetClass.SplitStr;
+            string str = "";
+
+            if (string.IsNullOrEmpty(split)|| string.IsNullOrEmpty(classSplit))
+            {
+                Debug.LogError("类的列类分隔符或变量分隔符为空！！！");
+                return str;
+            }
+            object dataList = GetMemberValue(data,varClass.Name);
+            int listCount = System.Convert.ToInt32(dataList.GetType().InvokeMember("get_Count", BindingFlags.Default
+               | BindingFlags.InvokeMethod, null, dataList, new object[] { }));
+            for (int i = 0; i < listCount; i++)
+            {
+                object item = dataList.GetType().InvokeMember("get_Item",BindingFlags.Default
+                    |BindingFlags.InvokeMethod, null,dataList,new object[] { i});
+
+                for (int j = 0; j < sheetClass.VarList.Count; j++)
+                {
+                    object value = GetMemberValue(item,sheetClass.VarList[j].Name);
+                    str += value.ToString();
+                    if (j!=sheetClass.VarList.Count-1)
+                    {
+                        str += classSplit.Replace("\\n","\n").Replace("\\r","\r");//注意换行转义处理
+                    }
+                }
+                if (i!=listCount-1)
+                {
+                    str += split.Replace("\\n", "\n").Replace("\\r", "\r"); //注意换行转义处理
+                }
+            }
+            return str;
+        }
+
+
+        /// <summary>
+        /// 获取基础 List 里面的所有值
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="varClass"></param>
+        /// <returns></returns>
+        private static string GetSplitbaseList(object data, VarClass varClass) {
+            string str = "";
+
+            if (string.IsNullOrEmpty(varClass.SplitStr)==true)
+            {
+                Debug.LogError("基础的 list 的分隔符为空");
+                return str;
+            }
+
+            object dataList = GetMemberValue(data,varClass.Name);
+            int listCount = System.Convert.ToInt32(dataList.GetType().InvokeMember("get_Count",BindingFlags.Default
+                |BindingFlags.InvokeMethod, null,dataList,new object[] { }));
+
+            for (int i = 0; i < listCount; i++)
+            {
+                object item = dataList.GetType().InvokeMember("get_Item", BindingFlags.Default
+                | BindingFlags.InvokeMethod, null, dataList, new object[] { i });
+                str += item.ToString();
+                if (i!=listCount-1)
+                {
+                    str += varClass.SplitStr.Replace("\\n", "\n").Replace("\\r", "\r"); //注意换行转义处理
+                }
+            }
+
+            return str;
         }
 
         /// <summary>
