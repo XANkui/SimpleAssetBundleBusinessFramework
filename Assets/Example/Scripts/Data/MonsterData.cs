@@ -8,6 +8,7 @@ namespace AssetBundleBusinessFramework {
     [System.Serializable]
 	public class MonsterData : ExcelBase
 	{
+#if UNITY_EDITOR
         /// <summary>
         /// 模拟数据加载
         /// </summary>
@@ -25,7 +26,7 @@ namespace AssetBundleBusinessFramework {
                 AllMonster.Add(monster);
             }
         }
-
+#endif
         /// <summary>
         /// 数据初始化
         /// </summary>

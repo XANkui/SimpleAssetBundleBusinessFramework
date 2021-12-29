@@ -36,19 +36,21 @@ namespace AssetBundleBusinessFramework.Example {
             // 预加载 对象
             ObjectManager.Instance.PreloadGameObject(ConStr.PREFAB_ATTACK_PATH,5);
 
-
-            GameScenesManager.Instance.LoadScene(ConStr.MENU_SCENE);
+            // 加载场景
+            //GameScenesManager.Instance.LoadScene(ConStr.MENU_SCENE);
 
         }
 
+        // 注册UI窗口
         void RegisterUI() {
-            UIManager.Instance.Register<MenuUI>(ConStr.MENU_PANEL);
-            UIManager.Instance.Register<LoadingUI>(ConStr.LOADING_PANEL);
+            //UIManager.Instance.Register<MenuUI>(ConStr.MENU_PANEL);
+            //UIManager.Instance.Register<LoadingUI>(ConStr.LOADING_PANEL);
         }
 
+        // 加载配置表
         void LoadConfiger() {
-            ConfigManager.Instance.LoadData<MonsterData>(CFG.TABLE_MONSTER);
-            ConfigManager.Instance.LoadData<BuffData>(CFG.TABLE_BUFF);
+            //ConfigManager.Instance.LoadData<MonsterData>(CFG.TABLE_MONSTER);
+            //ConfigManager.Instance.LoadData<BuffData>(CFG.TABLE_BUFF);
         }
 
         private void Update()

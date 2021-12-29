@@ -97,9 +97,9 @@ namespace AssetBundleBusinessFramework {
 
     public class DataEditor 
 	{
-        private static string XmlPath = "Assets/GameData/Data/Xml/";
-        private static string BinaryPath = "Assets/GameData/Data/Binary/";
-        private static string ScriptsPath = "Assets/Example/Scripts/Data/";
+        private static string XmlPath = ReadDataConfig.GetDataConfig().XmlPath;
+        private static string BinaryPath = ReadDataConfig.GetDataConfig().BinaryPath;
+        private static string ScriptsPath = ReadDataConfig.GetDataConfig().ScriptsPath;
 
         private static string ExcelPath = Application.dataPath+"/../Data/Excel/";
         private static string RegPath = Application.dataPath+"/../Data/Reg/";
@@ -259,7 +259,7 @@ namespace AssetBundleBusinessFramework {
             }
 
             // 根据类的结构，创建类，并且给每个变量赋值（从Excel里读取的值）
-            object ObjClass = CreateClass(className);
+            object objClass = CreateClass(className);
             List<string> outKeyList = new List<string>();
             foreach (string str in allSheetClassDict.Keys)
             {
@@ -272,11 +272,13 @@ namespace AssetBundleBusinessFramework {
 
             for (int i = 0; i < outKeyList.Count; i++)
             {
-                ReadDataToClass(ObjClass,allSheetClassDict[outKeyList[i]],sheetDataDict[outKeyList[i]],
+                ReadDataToClass(objClass,allSheetClassDict[outKeyList[i]],sheetDataDict[outKeyList[i]],
                     allSheetClassDict,sheetDataDict,null);
             }
 
-            BinarySerializeOpt.XmlSerialize(XmlPath+xmlName,ObjClass);
+            BinarySerializeOpt.XmlSerialize(XmlPath+xmlName,objClass);
+            // 转为二进制
+           // BinarySerializeOpt.BinarySeralize(BinaryPath+className+".bytes",objClass);
             Debug.Log($"{excelName} 表导入 Unity 完成");
             AssetDatabase.Refresh();
         }

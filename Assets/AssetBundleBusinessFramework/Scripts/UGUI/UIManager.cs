@@ -23,7 +23,7 @@ namespace AssetBundleBusinessFramework.UI {
 		private EventSystem m_EventSystem;
 		private float m_CavansRate = 0;
 
-        private const string UI_PREFABS_PATH = "Assets/GameData/Prefabs/UGUI/Panel/";
+        private string m_UIPrefabPath = "Assets/GameData/Prefabs/UGUI/Panel/";
 
         // 所有打开的窗口
         private Dictionary<string, Window> m_WindowDIc = new Dictionary<string, Window>();
@@ -55,6 +55,15 @@ namespace AssetBundleBusinessFramework.UI {
         public void Register<T>(string name) where T : Window {
             m_RegisterDic[name] = typeof(T);
         }
+
+        /// <summary>
+        /// 设置所有节目的UI路径
+        /// </summary>
+        /// <param name="path"></param>
+        public void SetUIPrefabPath(string path) {
+            m_UIPrefabPath = path;
+        }
+
 
         /// <summary>
         /// 显示或者隐藏所有 UI
@@ -140,7 +149,7 @@ namespace AssetBundleBusinessFramework.UI {
                     Debug.LogError($"找不到窗口对应的脚本，窗口名是: " + wndName);
                 }
 
-                GameObject wndObj = ObjectManager.Instance.InstantiateObject(UI_PREFABS_PATH + wndName, false, false);
+                GameObject wndObj = ObjectManager.Instance.InstantiateObject(m_UIPrefabPath + wndName, false, false);
                 if (wndObj == null)
                 {
                     Debug.Log("创建窗口 Prefab 失败:" + wndName);

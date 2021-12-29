@@ -3,6 +3,8 @@
   <ABList Path="Assets/GameData/Prefabs/Attack.prefab" Crc="192126642" ABName="attack" AssetName="Attack.prefab">
     <ABDependce>shader</ABDependce>
   </ABList>
+  <ABList Path="Assets/GameData/Data/Binary/AssetBundleBusinessFramework.BuffData.bytes" Crc="2266465852" ABName="bytes" AssetName="AssetBundleBusinessFramework.BuffData.bytes" />
+  <ABList Path="Assets/GameData/Data/Binary/AssetBundleBusinessFramework.MonsterData.bytes" Crc="2637352147" ABName="bytes" AssetName="AssetBundleBusinessFramework.MonsterData.bytes" />
   <ABList Path="Assets/GameData/Prefabs/GameStart.prefab" Crc="661067300" ABName="gamestart" AssetName="GameStart.prefab" />
   <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/LoadingPanel.prefab" Crc="968375833" ABName="loadingpanel" AssetName="LoadingPanel.prefab" />
   <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/MenuPanel.prefab" Crc="2681775694" ABName="menupanel" AssetName="MenuPanel.prefab" />

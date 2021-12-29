@@ -21,3 +21,5 @@ MonoBehaviour:
     Path: Assets/GameData/Shaders
   - ABName: ugui
     Path: Assets/GameData/UGUI
+  - ABName: bytes
+    Path: Assets/GameData/Data/Binary

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 928bbc20b699fd64cb68ac3658fa730e, type: 3}
+  m_Name: DataConfig
+  m_EditorClassIdentifier: 
+  ABBytePath: Assets/GameData/Data/ABData/AssetBundleConfig.bytes
+  APPName: AppName
+  XmlPath: Assets/GameData/Data/Xml/
+  BinaryPath: Assets/GameData/Data/Binary/
+  ScriptsPath: Assets/Example/Scripts/Data/

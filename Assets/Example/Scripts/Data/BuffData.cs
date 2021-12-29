@@ -9,6 +9,7 @@ namespace AssetBundleBusinessFramework
 	[System.Serializable]
 	public class BuffData : ExcelBase
 	{
+#if UNITY_EDITOR
         public override void Construction()
         {
             AllBuffList = new List<BuffBase>();
@@ -58,7 +59,7 @@ namespace AssetBundleBusinessFramework
                 MonsterBuffList.Add(buff);
             }
         }
-
+#endif
         public override void Init()
         {
             m_AllBuffDict.Clear();

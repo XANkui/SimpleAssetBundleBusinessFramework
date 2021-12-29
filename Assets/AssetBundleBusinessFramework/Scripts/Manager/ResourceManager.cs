@@ -242,12 +242,17 @@ namespace AssetBundleBusinessFramework {
 			{
 
 				item = AssetBundleManager.Instance.FindResourceItem(crc);
-				if (item.Obj != null)
+				if (item !=null && item.Obj != null)
 				{
-					obj = item.Obj;
+					obj = item.Obj as Object;
 				}
 				else
 				{
+                    if (item==null)
+                    {
+						item = new ResourceItem();
+						item.Crc = crc;
+                    }
 					obj = LoadAssetByEditor<Object>(path);
 				}
 			}

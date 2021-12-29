@@ -17,7 +17,7 @@ namespace AssetBundleBusinessFramework
 		// AB 配置路径
 		private readonly static string ABCONFIG_PATH = "Assets/AssetBundleBusinessFramework/Editor/ABConfig.asset";
 
-		private  readonly static string AB_BYTE_PATH = "Assets/GameData/Data/ABData/AssetBundleConfig.bytes";
+		private  readonly static string AB_BYTE_PATH = ReadDataConfig.GetDataConfig().ABBytePath;
 		// key ab包名，value 是路径，所有 文件夹 ab 包的 dic 
 		private static Dictionary<string, string> m_AllFileDirDict = new Dictionary<string, string>();
 		// 记录所有 ab 资源路径的列表，用于过滤使用
@@ -31,6 +31,9 @@ namespace AssetBundleBusinessFramework
 
 		[MenuItem("MyTools/MyAssetBundle/打包 AB 包")]
 		public static void Build() {
+
+			// 配置表转为二进制（游戏配置表打包）
+			DataEditor.AllExcelToXml();
 
 			// 收集 ABConfig 的所有需要打AB包的资源和依赖资源
 			CollectABConfigAllABAndDependenciesInfo();
@@ -342,11 +345,15 @@ namespace AssetBundleBusinessFramework
 					continue;
 				}
 				else {
-					
+					Debug.Log($"此AB包已经被删除或者改名了：{fileInfos[i].Name}");
                     if (File.Exists(fileInfos[i].FullName))
                     {
 						File.Delete(fileInfos[i].FullName);
-						Debug.Log($"删除 {fileInfos[i].Name} 废弃的包");
+						//Debug.Log($"删除 {fileInfos[i].Name} 废弃的包");
+					}
+                    if (File.Exists(fileInfos[i].FullName+ ".manifest"))
+                    {
+						File.Delete(fileInfos[i].FullName + ".manifest");
 					}
 				}
             }

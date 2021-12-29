@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3258599030
+CRC: 979932393
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -12,30 +12,33 @@ AssetBundleManifest:
       Name: ugui
       Dependencies: {}
     Info_3:
+      Name: bytes
+      Dependencies: {}
+    Info_4:
       Name: attack
       Dependencies:
         Dependency_0: shader
-    Info_4:
+    Info_5:
       Name: particletest1
       Dependencies: {}
-    Info_5:
+    Info_6:
       Name: gamestart
       Dependencies: {}
-    Info_6:
+    Info_7:
       Name: test1
       Dependencies: {}
-    Info_7:
+    Info_8:
       Name: loadingpanel
       Dependencies: {}
-    Info_8:
+    Info_9:
       Name: menupanel
       Dependencies: {}
-    Info_9:
+    Info_10:
       Name: testui1
       Dependencies: {}
-    Info_10:
+    Info_11:
       Name: testui2
       Dependencies: {}
-    Info_11:
+    Info_12:
       Name: assetbundleconfig
       Dependencies: {}

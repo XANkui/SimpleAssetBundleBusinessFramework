@@ -61,6 +61,7 @@ namespace AssetBundleBusinessFramework {
 
 	public class AssetBundleManager : Singleton<AssetBundleManager>
 	{
+		private string m_ABConfigABName = "assetbundleconfig";
 		// key: crc,value : 资源 Item
 		private Dictionary<uint, ResourceItem> m_ResourceItemsDict = new Dictionary<uint, ResourceItem>();
 		// key: crc,value : AB 资源的引用计数Item 
@@ -68,6 +69,12 @@ namespace AssetBundleBusinessFramework {
 		// AssetBundleItem 类对象池
 		private ClassObjectPool<AssetBundleItem> m_AssetBundleItemPool = ObjectManager.Instance.GetOrCreateClassPool<AssetBundleItem>(500);
 		
+		protected string ABLoadPath {
+			get {
+				return Application.streamingAssetsPath + "/";
+			}
+		}
+
 		/// <summary>
 		/// 加载二进制配置文件
 		/// </summary>
@@ -79,9 +86,9 @@ namespace AssetBundleBusinessFramework {
             }
             Debug.LogWarning("LoadAssetBundleConfig ==========");
 			m_ResourceItemsDict.Clear();
-			string configPath = Application.streamingAssetsPath + "/assetbundleconfig";
+			string configPath = ABLoadPath + m_ABConfigABName;
 			AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
-			TextAsset textAsset = configAB.LoadAsset<TextAsset>("assetbundleconfig");
+			TextAsset textAsset = configAB.LoadAsset<TextAsset>(m_ABConfigABName);
             if (textAsset==null)
             {
 				Debug.LogError("AssetBundleConfig 不存在");
@@ -151,7 +158,7 @@ namespace AssetBundleBusinessFramework {
 			if (m_AssetBundleItemRefDict.TryGetValue(crc, out refItem) == false)
 			{
 				AssetBundle assetBundle = null;
-				string fullPath = Application.streamingAssetsPath + "/" + abName;
+				string fullPath = ABLoadPath + abName;
 				if (File.Exists(fullPath) == true)
 				{
 					assetBundle = AssetBundle.LoadFromFile(fullPath);

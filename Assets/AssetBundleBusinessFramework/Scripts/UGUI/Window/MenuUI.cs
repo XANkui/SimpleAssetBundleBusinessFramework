@@ -19,6 +19,17 @@ namespace AssetBundleBusinessFramework.UI.Test {
             // 测试异步加载图片
             ResourceManager.Instance.AsyncLoadResource("Assets/GameData/UGUI/bird.jpg",OnLoadSpriteTest1,LoadResPriority.RES_SLOW,true);
             ResourceManager.Instance.AsyncLoadResource("Assets/GameData/UGUI/dog.png",OnLoadSpriteTest2,LoadResPriority.RES_HIGHT, true);
+
+            LoadMonsterData();
+        }
+
+        private void LoadMonsterData() {
+            MonsterData monsterData = ConfigManager.Instance.LoadData<MonsterData>(CFG.TABLE_MONSTER);
+            for (int i = 0; i < monsterData.AllMonster.Count; i++)
+            {
+                Debug.Log($"ID:{monsterData.AllMonster[i].Id},名字:{monsterData.AllMonster[i].Name},外观:{monsterData.AllMonster[i].OutLook}," +
+                    $"高度:{monsterData.AllMonster[i].Height},稀有度:{monsterData.AllMonster[i].Rare},");
+            }
         }
 
         private void OnLoadSpriteTest2(string path, UnityEngine.Object obj, object param1, object param2, object param3)
