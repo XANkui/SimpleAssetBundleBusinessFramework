@@ -24,7 +24,7 @@ namespace AssetBundleBusinessFramework.UI.Test {
         }
 
         private void LoadMonsterData() {
-            MonsterData monsterData = ConfigManager.Instance.LoadData<MonsterData>(CFG.TABLE_MONSTER);
+            MonsterData monsterData = ConfigManager.Instance.FindData<MonsterData>(CFG.TABLE_MONSTER);
             for (int i = 0; i < monsterData.AllMonster.Count; i++)
             {
                 Debug.Log($"ID:{monsterData.AllMonster[i].Id},名字:{monsterData.AllMonster[i].Name},外观:{monsterData.AllMonster[i].OutLook}," +

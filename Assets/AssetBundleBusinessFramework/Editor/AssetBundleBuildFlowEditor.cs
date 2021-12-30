@@ -215,11 +215,8 @@ namespace AssetBundleBusinessFramework
                     }
 
 					Debug.Log($" 此AB包：{allBundles[i]} , 包含资源路径为：{allBundlePath[j]}" );
-                    if (IsValidPathForPrefab(allBundlePath[j]))
-                    {
-						resPathDict.Add(allBundlePath[j], allBundles[i]);
+					resPathDict.Add(allBundlePath[j], allBundles[i]);
 
-					}
 				}
 
 				// 判断是否存在该路径文件夹
@@ -259,6 +256,11 @@ namespace AssetBundleBusinessFramework
 			xmlConfig.ABList = new List<ABBase>();
             foreach (string path in resPathDict.Keys)
             {
+				if (IsValidPathForPrefab(path)==false)
+				{
+					continue;
+                }
+
 				ABBase abBase = new ABBase();
 				abBase.Path = path;
 				abBase.Crc = Crc32.GetCrc32(path);

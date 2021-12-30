@@ -9,7 +9,7 @@ namespace AssetBundleBusinessFramework {
 
 	public class AutoBuildApp 
 	{
-		private static string m_AppName = ReadDataConfig.GetDataConfig().APPName;
+		private static string m_AppName = PlayerSettings.productName;//ReadDataConfig.GetDataConfig().APPName;
 		private static string m_AndroidPath = Application.dataPath + "/../BuildTarget/Android/";
 		private static string m_iOSPath = Application.dataPath + "/../BuildTarget/iOS/";
 		private static string m_WindowsPath = Application.dataPath + "/../BuildTarget/Windows/";
